@@ -16,7 +16,7 @@ HTML / CSS / Vanilla JavaScript だけで動作します（ビルド不要）。
 - 簡易サーバー経由でも起動できます。
 
 ```bash
-cd /Users/y-nakamura/yugo_workspace/human-body-coloring
+cd /path/to/your-repo
 python3 -m http.server 8080
 ```
 
