@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人型シルエット 4色塗り</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <aside class="tool-panel" aria-label="ツールパネル">
+      <h1>人型シルエット 4色塗り</h1>
+      <p id="statusText" class="status-text">シルエット画像を読み込み中...</p>
+
+      <section class="control-group">
+        <h2>カラーパレット</h2>
+        <!-- 追加仕様: COLORS定数から動的にパレットを生成する -->
+        <div id="palette" class="palette" aria-label="カラーパレット"></div>
+      </section>
+
+      <section class="control-group">
+        <h2>ブラシ</h2>
+        <label class="slider-label" for="brushSize">
+          サイズ: <span id="brushSizeValue">12</span>px
+        </label>
+        <input id="brushSize" type="range" min="2" max="40" step="1" value="12" disabled>
+      </section>
+
+      <section class="control-group">
+        <h2>操作</h2>
+        <div class="actions">
+          <button id="eraserBtn" class="tool-btn" type="button" disabled>消しゴム</button>
+          <button id="undoBtn" class="tool-btn" type="button" disabled>Undo</button>
+          <button id="clearBtn" class="tool-btn" type="button" disabled>クリア</button>
+          <button id="saveBtn" class="tool-btn save-btn" type="button" disabled>PNG保存</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="canvas-panel">
+      <div id="canvasHost" aria-label="描画エリア">
+        <div id="canvasStage">
+          <canvas id="paintCanvas"></canvas>
+          <canvas id="outlineCanvas"></canvas>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 追加仕様: 画面右下固定の色凡例 -->
+  <section id="colorLegend" class="color-legend" aria-label="色の凡例">
+    <h2 class="legend-title">色の凡例</h2>
+    <ul id="legendList" class="legend-list"></ul>
+  </section>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
