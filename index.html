@@ -11,6 +11,12 @@
     <aside class="tool-panel" aria-label="ツールパネル">
       <h1>人型シルエット 4色塗り</h1>
       <p id="statusText" class="status-text">シルエット画像を読み込み中...</p>
+      <section class="instruction-box" aria-label="教示文">
+        <h2>教示文</h2>
+        <p>人型の枠の中に色を塗っていただきます。</p>
+        <p>「あなたのふだんの状態では、体の様々な部位はどのような状態でしょうか」</p>
+        <p>とても生き生きしている状態をだいだいいろ、やや生き生きしている状態をペールオレンジ、どちらともいえない状態を白（色なし）、あまり生き生きしていない状態を水色、全く生き生きしていない状態を青色、で表現してください。</p>
+      </section>
 
       <section class="control-group">
         <h2>カラーパレット</h2>
@@ -20,18 +26,35 @@
 
       <section class="control-group">
         <h2>ブラシ</h2>
-        <label class="slider-label" for="brushSize">
-          サイズ: <span id="brushSizeValue">12</span>px
-        </label>
-        <input id="brushSize" type="range" min="2" max="40" step="1" value="12" disabled>
+        <p class="preset-label">太さを選択</p>
+        <div id="brushPresetGroup" class="brush-presets" role="group" aria-label="ブラシの太さ">
+          <button class="brush-preset-btn" type="button" data-size="5" disabled>5px</button>
+          <button class="brush-preset-btn active" type="button" data-size="10" disabled>10px</button>
+          <button class="brush-preset-btn" type="button" data-size="15" disabled>15px</button>
+          <button class="brush-preset-btn" type="button" data-size="20" disabled>20px</button>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h2>ID</h2>
+        <label class="slider-label" for="exportIdInput">保存ファイル名に使うID</label>
+        <input
+          id="exportIdInput"
+          class="text-input"
+          type="text"
+          placeholder="例: user01"
+          autocomplete="off"
+          inputmode="text"
+          maxlength="64"
+        >
       </section>
 
       <section class="control-group">
         <h2>操作</h2>
         <div class="actions">
           <button id="eraserBtn" class="tool-btn" type="button" disabled>消しゴム</button>
-          <button id="undoBtn" class="tool-btn" type="button" disabled>Undo</button>
-          <button id="clearBtn" class="tool-btn" type="button" disabled>クリア</button>
+          <button id="undoBtn" class="tool-btn" type="button" disabled>一つ前に戻る</button>
+          <button id="clearBtn" class="tool-btn" type="button" disabled>すべて消去</button>
           <button id="saveBtn" class="tool-btn save-btn" type="button" disabled>PNG保存</button>
         </div>
       </section>
@@ -52,6 +75,16 @@
     <h2 class="legend-title">色の凡例</h2>
     <ul id="legendList" class="legend-list"></ul>
   </section>
+  <!-- モバイル対応: 凡例の表示/非表示を切り替えるボタン -->
+  <button
+    id="legendToggleBtn"
+    class="legend-toggle-btn"
+    type="button"
+    aria-controls="colorLegend"
+    aria-expanded="true"
+  >
+    凡例を隠す
+  </button>
 
   <script src="app.js" defer></script>
 </body>

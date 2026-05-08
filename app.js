@@ -3,29 +3,34 @@
 const COLORS = [
   {
     name: 'オレンジ',
-    value: '#F28C28',
-    legendText: 'とても活性化している'
+    value: '#F28C28'
   },
   {
     name: 'ペールオレンジ',
-    value: '#F6C59A',
-    legendText: 'やや活性化している'
+    value: '#F6C59A'
   },
   {
     name: '水色',
-    value: '#8ECAE6',
-    legendText: 'あまり活性化していない'
+    value: '#8ECAE6'
   },
   {
     name: '青色',
-    value: '#219EBC',
-    legendText: 'まったく活性化していない'
+    value: '#1D4ED8'
   }
 ];
 
-const DEFAULT_BRUSH_SIZE = 12;
+const LEGEND_ITEMS = [
+  { label: 'とても生き生きしている', color: COLORS[0].value, paletteColor: COLORS[0].value },
+  { label: 'やや生き生きしている', color: COLORS[1].value, paletteColor: COLORS[1].value },
+  { label: '（色なし）', color: '#FFFFFF', neutral: true },
+  { label: 'あまり生き生きしていない', color: COLORS[2].value, paletteColor: COLORS[2].value },
+  { label: '全く生き生きしていない', color: COLORS[3].value, paletteColor: COLORS[3].value }
+];
+
+const DEFAULT_BRUSH_SIZE = 10;
 const MAX_UNDO_STEPS = 20;
 const MASK_EDGE_PROTECT_PX = 2;
+const LEGEND_COLLAPSED_STORAGE_KEY = 'human-body-coloring.legendCollapsed';
 const SILHOUETTE_SPEC = {
   label: 'silhouette.svg',
   viewBox: { minX: -250, minY: -250, width: 500, height: 500 },
@@ -43,9 +48,11 @@ const canvasStage = document.getElementById('canvasStage');
 
 const statusText = document.getElementById('statusText');
 const palette = document.getElementById('palette');
+const colorLegend = document.getElementById('colorLegend');
+const legendToggleBtn = document.getElementById('legendToggleBtn');
 const legendList = document.getElementById('legendList');
-const brushSizeInput = document.getElementById('brushSize');
-const brushSizeValue = document.getElementById('brushSizeValue');
+const brushPresetButtons = Array.from(document.querySelectorAll('.brush-preset-btn'));
+const exportIdInput = document.getElementById('exportIdInput');
 const eraserBtn = document.getElementById('eraserBtn');
 const undoBtn = document.getElementById('undoBtn');
 const clearBtn = document.getElementById('clearBtn');
@@ -64,6 +71,7 @@ const state = {
   drawing: false,
   pointerId: null,
   lastPoint: null,
+  legendCollapsed: false,
   undoStack: [],
   resizeObserver: null,
   maskCanvas: document.createElement('canvas'),
@@ -83,23 +91,24 @@ let resizeRafId = 0;
 init();
 
 function init() {
-  // 追加仕様: COLORS定数を使って、パレットと凡例を同時に構築する。
   buildColorUi();
+  setupLegendToggle();
   bindUiEvents();
-  brushSizeValue.textContent = String(DEFAULT_BRUSH_SIZE);
   setControlsEnabled(false);
   updateActiveUi();
   loadSilhouette();
 }
 
-// 追加仕様: パレットと凡例の色を同じ定数（COLORS）から生成する。
 function buildColorUi() {
   palette.replaceChildren();
   legendList.replaceChildren();
 
   COLORS.forEach((color) => {
     palette.appendChild(createPaletteButton(color));
-    legendList.appendChild(createLegendItem(color));
+  });
+
+  LEGEND_ITEMS.forEach((item) => {
+    legendList.appendChild(createLegendItem(item));
   });
 
   paletteButtons = Array.from(palette.querySelectorAll('.palette-btn'));
@@ -122,33 +131,78 @@ function createPaletteButton(color) {
   return button;
 }
 
-function createLegendItem(color) {
+function createLegendItem(itemData) {
   const item = document.createElement('li');
   item.className = 'legend-item';
-  item.dataset.color = color.value;
+  item.dataset.legendType = itemData.neutral ? 'neutral' : 'color';
+  if (itemData.paletteColor) {
+    item.dataset.paletteColor = itemData.paletteColor;
+  }
 
   const dot = document.createElement('span');
   dot.className = 'legend-dot';
-  dot.style.setProperty('--legend-color', color.value);
+  dot.style.setProperty('--legend-color', itemData.color);
+  if (itemData.neutral) {
+    dot.classList.add('no-color');
+  }
 
   const textWrap = document.createElement('span');
   textWrap.className = 'legend-text';
 
   const name = document.createElement('span');
   name.className = 'legend-name';
-  name.textContent = `${color.name}（${color.value}）`;
-
-  const description = document.createElement('span');
-  description.className = 'legend-desc';
-  description.textContent = color.legendText;
+  name.textContent = itemData.label;
 
   textWrap.appendChild(name);
-  textWrap.appendChild(description);
 
   item.appendChild(dot);
   item.appendChild(textWrap);
 
   return item;
+}
+
+function setupLegendToggle() {
+  if (!legendToggleBtn || !colorLegend) {
+    return;
+  }
+
+  legendToggleBtn.hidden = false;
+  legendToggleBtn.addEventListener('click', () => {
+    setLegendCollapsed(!state.legendCollapsed);
+    persistLegendCollapsedState();
+  });
+
+  setLegendCollapsed(readLegendCollapsedState());
+}
+
+function setLegendCollapsed(collapsed) {
+  state.legendCollapsed = Boolean(collapsed);
+  document.body.classList.toggle('legend-collapsed', state.legendCollapsed);
+
+  if (legendToggleBtn) {
+    legendToggleBtn.textContent = state.legendCollapsed ? '凡例を表示' : '凡例を隠す';
+    legendToggleBtn.setAttribute('aria-expanded', String(!state.legendCollapsed));
+  }
+
+  if (colorLegend) {
+    colorLegend.setAttribute('aria-hidden', String(state.legendCollapsed));
+  }
+}
+
+function readLegendCollapsedState() {
+  try {
+    return window.localStorage.getItem(LEGEND_COLLAPSED_STORAGE_KEY) === '1';
+  } catch (error) {
+    return false;
+  }
+}
+
+function persistLegendCollapsedState() {
+  try {
+    window.localStorage.setItem(LEGEND_COLLAPSED_STORAGE_KEY, state.legendCollapsed ? '1' : '0');
+  } catch (error) {
+    // no-op: private browsing 等で localStorage が使えない場合は保存しない。
+  }
 }
 
 function bindUiEvents() {
@@ -164,9 +218,15 @@ function bindUiEvents() {
     });
   });
 
-  brushSizeInput.addEventListener('input', () => {
-    state.brushSize = Number(brushSizeInput.value);
-    brushSizeValue.textContent = String(state.brushSize);
+  brushPresetButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const nextSize = Number(button.dataset.size);
+      if (!Number.isFinite(nextSize) || nextSize <= 0) {
+        return;
+      }
+      state.brushSize = nextSize;
+      updateActiveUi();
+    });
   });
 
   eraserBtn.addEventListener('click', () => {
@@ -223,7 +283,7 @@ function loadSilhouette() {
       state.ready = true;
       setControlsEnabled(true);
       updateUndoButtonState();
-      setStatus(`準備完了: ${spec.label} を組み込み定義から初期化しました。`);
+      setStatus('');
     });
   } catch (error) {
     console.error(error);
@@ -545,14 +605,31 @@ function saveAsPng() {
 
   const link = document.createElement('a');
   link.href = merged.toDataURL('image/png');
-  link.download = `human-body-coloring-${stamp}.png`;
+  link.download = buildExportFilename(stamp);
   link.click();
+}
+
+function buildExportFilename(stamp) {
+  const rawId = exportIdInput ? exportIdInput.value : '';
+  const sanitizedId = sanitizeFileNameSegment(rawId);
+  if (!sanitizedId) {
+    return `human-body-coloring-${stamp}.png`;
+  }
+  return `human-body-coloring-${sanitizedId}-${stamp}.png`;
+}
+
+function sanitizeFileNameSegment(raw) {
+  return String(raw)
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 }
 
 function setControlsEnabled(enabled) {
   const controls = [
     ...paletteButtons,
-    brushSizeInput,
+    ...brushPresetButtons,
     eraserBtn,
     undoBtn,
     clearBtn,
@@ -572,11 +649,21 @@ function updateActiveUi() {
     const active = state.tool === 'brush' && button.dataset.color === state.selectedColor;
     button.classList.toggle('active', active);
   });
-  // 追加仕様: 選択中の色を凡例にも反映する。
+
+  brushPresetButtons.forEach((button) => {
+    const size = Number(button.dataset.size);
+    const active = Number.isFinite(size) && size === state.brushSize;
+    button.classList.toggle('active', active);
+  });
+
   legendItems.forEach((item) => {
-    const active = item.dataset.color === state.selectedColor;
+    const isNeutral = item.dataset.legendType === 'neutral';
+    const active = isNeutral
+      ? state.tool === 'eraser'
+      : state.tool === 'brush' && item.dataset.paletteColor === state.selectedColor;
     item.classList.toggle('active', active);
   });
+
   eraserBtn.classList.toggle('active', state.tool === 'eraser');
 }
 
