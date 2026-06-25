@@ -58,6 +58,7 @@ const eraserBtn = document.getElementById('eraserBtn');
 const undoBtn = document.getElementById('undoBtn');
 const clearBtn = document.getElementById('clearBtn');
 const saveBtn = document.getElementById('saveBtn');
+const saveSvgBtn = document.getElementById('saveSvgBtn');
 let paletteButtons = [];
 let legendItems = [];
 
@@ -72,6 +73,7 @@ const state = {
   activePath: null,
   activePathData: '',
   activeUndoEntry: null,
+  nextStrokeOrder: 1,
   legendCollapsed: false,
   undoStack: [],
   resizeObserver: null,
@@ -244,6 +246,10 @@ function bindUiEvents() {
 
   saveBtn.addEventListener('click', () => {
     saveAsPng();
+  });
+
+  saveSvgBtn.addEventListener('click', () => {
+    saveAsSvg();
   });
 
   window.addEventListener('resize', requestResize, { passive: true });
@@ -541,19 +547,30 @@ function pointToInitialPath(point) {
 }
 
 function createStrokeElement(tool, pathData) {
+  const order = state.nextStrokeOrder;
   const attrs = {
     d: pathData,
     fill: 'none',
     stroke: tool === 'eraser' ? '#000000' : state.selectedColor,
     'stroke-width': String(state.brushSize),
     'stroke-linecap': 'round',
-    'stroke-linejoin': 'round'
+    'stroke-linejoin': 'round',
+    'data-order': String(order),
+    'data-tool': tool,
+    'data-brush-size': String(state.brushSize),
+    'data-created-at': new Date().toISOString()
   };
+
+  if (tool !== 'eraser') {
+    attrs['data-color'] = state.selectedColor;
+  }
 
   return createSvgElement('path', attrs);
 }
 
 function appendStrokeElement(tool, element) {
+  state.nextStrokeOrder += 1;
+
   if (tool === 'eraser') {
     state.eraserMaskGroup.appendChild(element);
     return { type: 'stroke', element };
@@ -650,7 +667,7 @@ function saveAsPng() {
     return;
   }
 
-  const serializedSvg = serializeCurrentSvg();
+  const serializedSvg = serializeCurrentSvg({ includeMetadata: false, width: EXPORT_SIZE, height: EXPORT_SIZE });
   const merged = document.createElement('canvas');
   merged.width = EXPORT_SIZE;
   merged.height = EXPORT_SIZE;
@@ -682,22 +699,99 @@ function saveAsPng() {
   image.src = svgUrl;
 }
 
-function serializeCurrentSvg() {
+function saveAsSvg() {
+  if (!state.ready) {
+    return;
+  }
+
+  const serializedSvg = serializeCurrentSvg({ includeMetadata: true });
+  const now = new Date();
+  const stamp = buildTimestamp(now);
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(new Blob([serializedSvg], { type: 'image/svg+xml;charset=utf-8' }));
+  link.download = buildExportFilename(stamp, 'svg');
+  link.click();
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(link.href);
+  }, 0);
+}
+
+function serializeCurrentSvg(options = {}) {
+  const {
+    includeMetadata = true,
+    width = null,
+    height = null
+  } = options;
   const clone = state.svg.cloneNode(true);
   clone.setAttribute('xmlns', SVG_NS);
-  clone.setAttribute('width', String(EXPORT_SIZE));
-  clone.setAttribute('height', String(EXPORT_SIZE));
+  if (width) {
+    clone.setAttribute('width', String(width));
+  }
+  if (height) {
+    clone.setAttribute('height', String(height));
+  }
   clone.removeAttribute('class');
+
+  if (includeMetadata) {
+    clone.insertBefore(createExportMetadataElement(), clone.firstChild);
+  }
+
   return new XMLSerializer().serializeToString(clone);
 }
 
-function buildExportFilename(stamp) {
+function createExportMetadataElement() {
+  const metadata = createSvgElement('metadata', {
+    id: 'human-body-coloring-metadata'
+  });
+  const script = document.createElementNS(SVG_NS, 'script');
+  script.setAttribute('type', 'application/json');
+  script.textContent = JSON.stringify(buildExportMetadata(), null, 2);
+  metadata.appendChild(script);
+  return metadata;
+}
+
+function buildExportMetadata() {
+  const strokes = collectStrokeMetadata();
+  return {
+    app: 'human-body-coloring',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    sourceSilhouette: state.silhouetteSpec ? state.silhouetteSpec.label : SILHOUETTE_SOURCE,
+    viewBox: state.silhouetteViewBox,
+    strokeCount: strokes.length,
+    strokes
+  };
+}
+
+function collectStrokeMetadata() {
+  return [
+    ...Array.from(state.paintGroup.children),
+    ...Array.from(state.eraserMaskGroup.children)
+  ]
+    .map((element) => ({
+      order: Number(element.dataset.order),
+      tool: element.dataset.tool,
+      color: element.dataset.color || null,
+      brushSize: Number(element.dataset.brushSize),
+      createdAt: element.dataset.createdAt,
+      pathData: element.getAttribute('d')
+    }))
+    .filter((item) => Number.isFinite(item.order))
+    .sort((a, b) => a.order - b.order);
+}
+
+function buildTimestamp(date) {
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
+}
+
+function buildExportFilename(stamp, extension = 'png') {
   const rawId = exportIdInput ? exportIdInput.value : '';
   const sanitizedId = sanitizeFileNameSegment(rawId);
   if (!sanitizedId) {
-    return `human-body-coloring-${stamp}.png`;
+    return `human-body-coloring-${stamp}.${extension}`;
   }
-  return `human-body-coloring-${sanitizedId}-${stamp}.png`;
+  return `human-body-coloring-${sanitizedId}-${stamp}.${extension}`;
 }
 
 function sanitizeFileNameSegment(raw) {
@@ -715,7 +809,8 @@ function setControlsEnabled(enabled) {
     eraserBtn,
     undoBtn,
     clearBtn,
-    saveBtn
+    saveBtn,
+    saveSvgBtn
   ];
   controls.forEach((el) => {
     el.disabled = !enabled;
