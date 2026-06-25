@@ -24,15 +24,17 @@ python3 -m http.server 8080
 
 ## 実装ポイント
 
-- 2レイヤー構成:
-  - `paintCanvas`: 塗りレイヤー
-  - `outlineCanvas`: 輪郭線レイヤー（最前面）
-- `silhouette.svg` の `viewBox` / `path` を `app.js` に固定定義して `Path2D` 化
+- SVGレイヤー構成:
+  - `silhouetteFill`: 白い人型シルエット
+  - `paintGroup`: ユーザーが描いたSVGストローク
+  - `eraserMaskGroup`: 消しゴム用SVGマスク
+  - `silhouette-outline`: 輪郭線（最前面）
+- `silhouette.svg` の `viewBox` / `path` を `app.js` に固定定義し、インラインSVGとして表示
 - マスク生成:
-  - `Path2D` の塗りをマスクに使い、`destination-in` で外側描画を除去
-  - 輪郭線付近はマスクから除外し、線を塗りつぶしにくくしている
+  - `clipPath` で人型シルエットの内側だけに描画を制限
+  - 消しゴムはSVGマスクに黒いストロークを追加して、塗りストロークを非表示化
 - 輪郭表示:
-  - SVG の線色 / 線幅を使って輪郭専用レイヤーを生成
+  - SVG の線色 / 線幅を使って輪郭線を最前面に描画
 - 操作:
   - 4色パレット / 消しゴム / すべて消去 / 一つ前に戻る（最大20）/ PNG保存
   - ブラシ太さプリセット（5 / 10 / 15 / 20px）
@@ -40,8 +42,9 @@ python3 -m http.server 8080
   - Pointer Events でマウス / タッチ / ペン対応
   - web/モバイル表示ともに凡例の表示/非表示をトグル可能
 - 描画品質:
-  - 高DPI対応（`devicePixelRatio`）
-  - リサイズ時も描画内容を保持して再描画
+  - 表示中のシルエット・塗り・消しゴムはSVG要素として保持
+  - 拡大表示時も輪郭とストロークはベクターとして描画
+  - PNG保存時のみSVGを高解像度（2500px四方）にラスタライズ
 
 ## 動作確認想定ブラウザ
 

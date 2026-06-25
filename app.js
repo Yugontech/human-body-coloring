@@ -29,20 +29,21 @@ const LEGEND_ITEMS = [
 
 const DEFAULT_BRUSH_SIZE = 10;
 const MAX_UNDO_STEPS = 20;
-const MASK_EDGE_PROTECT_PX = 2;
 const LEGEND_COLLAPSED_STORAGE_KEY = 'human-body-coloring.legendCollapsed';
-const SILHOUETTE_SPEC = {
+const SILHOUETTE_SOURCE = 'silhouette.svg';
+const FALLBACK_SILHOUETTE_SPEC = {
   label: 'silhouette.svg',
-  viewBox: { minX: -250, minY: -250, width: 500, height: 500 },
-  pathData: 'm0.22431-207.000004c-15.22118 0-23.61194 14.84035-21.02005 29.09293c1.28402 7.06117 4.099999 14.01264 8.6761 18.55082c-0.0009 3.9619-0.29479 8.406956-1.3757 12.026244c-2.55317 8.54917-10.54277 11.1053-18.54317 12.82906c-29.39361 6.33317-18.9583 27.22716-25.39674 70.62058c-4.69364 31.6338-0.50313 47.72286-0.50313 57.25806c0 9.53518-2.82238 16.04674-1.95619 23.84829c0.86619 7.80152 5.86021 14.95412 8.21873 16.045559c3.24066 1.49967 5.89173-4.66553 3.50771-13.27624c-0.45889-1.65746 2.53083-6.22275 2.67566-11.07732c0.20086-6.72959-1.65887-11.21938-1.65887-16.00332c0-8.23493 3.3608-23.20884 3.54824-42.62796c0.15149-15.70392 7.0718-39.26182 7.0718-39.26182c9.23236 28.07484 1.85162 42.36801-0.0106 71.87407c-3.34568 53.01581 9.16436 89.68238 8.57766 102.82966c-0.4907 10.99518-0.25264 19.59076 3.64497 39.09456c3.89771 19.5038 8.57964 48.22736 8.14659 56.4623c-0.43314 8.23493-10.4509 13.3774-11.15478 19.89587c-0.58887 5.45328 14.11244 7.60285 18.01015 4.13551c3.8977-3.46735 9.0679-13.44561 7.14746-21.26733c-2.58244-10.51796 1.41146-47.55706-2.037171-70.28959c-1.61411-10.63991-3.25425-16.87656-1.53044-28.80596c3.15429-21.82821 3.1124-68.48069 1.75561-75.23947h7.96366c-1.3566 6.75878-1.3984 53.41126 1.75562 75.23947c1.72381 11.9294 0.0839 18.16606-1.53045 28.80596c-3.44853 22.73252 0.54537 59.77163-2.03707 70.28959c-1.92044 7.82172 3.24975 17.79998 7.14746 21.26733c3.89762 3.46734 18.59893 1.31777 18.01015-4.13551c-0.70398-6.51847-10.72173-11.66094-11.15478-19.89587c-0.43314-8.23494 4.24897-36.9585 8.14659-56.4623c3.8977-19.5038 4.135659-28.09938 3.64497-39.09456c-0.58679-13.14728 11.92332-49.81385 8.57757-102.82966c-1.86208-29.50606-9.24443-43.79923-0.0123-71.87407c0 0 6.92027 23.5579 7.07181 39.26182c0.1874 19.41912 3.5482 34.39303 3.5482 42.62796c0 4.78394-1.85791 9.27373-1.65712 16.003319c0.14485 4.85457 3.13454 9.41986 2.67566 11.07732c-2.384 8.61071 0.26708 14.77591 3.50774 13.27624c2.3585-1.09144 7.35259-8.24404 8.21873-16.04556c0.86615-7.80155-1.95616-14.31311-1.95616-23.84829c0-9.5352 4.1905-25.62426-0.50313-57.25806c-6.43843-43.39342 3.99509-64.28741-25.39852-70.62058c-8.00032-1.72376-15.99001-4.27989-18.54317-12.82906c-1.04101-3.485848-1.35364-7.742424-1.37742-11.593154c4.84334-4.52102 7.80244-11.69338 9.12816-18.98391c2.59189-14.25258-5.79869-29.09293-21.01997-29.09293z',
+  viewBox: { minX: 0, minY: 0, width: 595.28, height: 841.89 },
+  pathData: 'M297.39,466.55c-2.78,40.55-4.68,80.19-9.58,120.33-1.35,11.09-1.65,21.33-1.03,32.4,1.16,20.74.73,40.78-.85,61.5l-3.86,50.49-.12,35.81c-.02,7.3.29,14.26-.84,21.38-1.65,10.41-8.79,18.15-19.04,20.99-13.5,3.73-37.2,3.06-42.72-9.57-2.66-6.09-2.16-13.14.81-18.96l7.34-14.37c3.52-6.89,6.23-13.69,5.57-21.51l-2-23.74-5.26-42.24c-2.52-20.26-3.23-39.95-2.15-60.32.76-14.34,1.08-28.12-.77-42.37l-4.25-32.86c-4-30.89-6.15-61.4-6.06-92.6.07-23.58,2.38-46.06,6.79-69.11,5.92-30.96,8.71-59.73,4.58-91.41-4.84,22.99-8.47,45.19-11.37,68.19l-6.69,52.98c-2.1,16.6-1.8,32.62-.59,49.28.85,11.7.3,27.16-10,32.33-5.99,3-12.97,1.54-18.2-2.53-10.6-8.25-14.08-24.47-14.8-38.02-.64-12.1-.65-23.59-.04-35.86,2-40.07,4.44-79.59,8.28-119.56,2.11-22.02,4.84-43.31,8.34-64.96,1.28-7.89,3.37-15.13,6.54-22.29,7.9-17.81,21.22-26.48,39.7-31.31l20.91-5.48c4.05-1.06,7.89-2.87,11.4-5,7.83-4.77,8.92-12.55,7.31-21.34-26.07-23.85-30.06-67.99-8.61-95.58,15.26-19.63,42.18-26.42,64.86-15.92,13.25,6.13,23.03,17.28,28.32,30.91,8.08,20.79,6.43,44.01-3.94,63.64-3.55,6.73-8.31,11.75-13.37,17.29-.98,3.93-.85,8.91.39,12.79,3.43,10.68,18.97,13.28,29.07,16.15l19.15,5.44c14.86,5.43,26.03,16.36,31.7,31.17,3.05,7.98,4.77,15.86,6.05,24.55,5.66,38.27,9.19,76.37,11.34,115.07l3.37,60.75.43,36.62c.1,8.21-1.4,16.11-3.81,23.82-2.02,6.48-5.26,12.29-10.37,16.62s-11.98,6.09-18.09,3.44c-10.88-4.73-11.64-20.83-10.79-32.74,1.16-16.25,1.54-31.86-.43-48.11l-6.48-53.4c-2.84-23.43-6.36-46.03-11.2-69.54-5.35,33.82-.84,64.29,5.17,97.29,3,16.47,4.87,32.34,5.42,49.17.92,28.29-.27,55.88-3.31,83.97l-6.57,49.2c-2.09,15.66-2.75,30.54-1.89,46.35,1.14,20.82.62,40.94-2.2,61.59l-5.86,42.87-2.29,23.37c-.75,7.65,1.3,14.74,4.86,21.39l6.35,11.88c2.66,4.97,4.09,10.37,3.98,16.07-.13,6.99-4.13,12.7-10.8,15.25-10.83,4.14-23.07,4.35-34.22,1.03-19.2-5.7-20.1-24-19.2-42.1.69-13.9.64-27.15-.35-41.08l-3.71-52.24c-1.28-18.02-1.21-35.38-.07-53.34.62-10.64.38-20.46-.46-31.17-4.83-40.86-7.01-81.27-9.79-122.73ZM297.02,458.84c4.64-.3,8.23,2.75,8.42,7.45,1.51,38.25,4.24,75.98,8.34,114.17,1.55,14.44,2.17,27.89,1.26,42.31-1.12,17.83-.96,34.96.31,52.78l3.6,50.46c1.03,14.51.91,28.34.2,42.81s-.22,28.91,13.82,33.08c11.28,3.35,32.41,2.65,34.95-6.28,1.15-4.05.6-8.52-1.29-12.19l-6.58-12.8c-4.51-8.77-7.71-17.66-6.71-27.61l3.02-30.05,5.79-43.41c2.51-18.81,2.33-37.16,1.34-56.16-.79-15.17,0-29.51,1.98-44.54l6.81-51.72c2.14-20.5,3.16-40.35,3.41-60.98.3-24.31-2.46-47.6-6.29-71.47l-4.55-28.34c-3.53-21.99-3.31-43.83-.42-65.84l3.07-23.39c.25-1.93,1.72-3.47,3.54-3.76,1.54-.25,3.75.92,4.17,2.8,3.71,16.82,7.3,33.08,9.62,50.23l11.69,86.34c2.7,19.97,2.79,39.35,1.28,59.31-.65,8.57-.25,22.17,6.7,24.67,3.63,1.31,7.6-.26,10.42-2.71,8.47-7.37,11.32-25.73,11.09-37.11l-.73-37.1-3.81-66.89c-2.04-35.74-5.58-70.84-10.9-106.13-3.1-20.55-9.77-38.27-29.64-46.75-13.89-5.93-27.8-6.48-42.6-13.58-9.49-4.55-14.99-12.95-14.41-23.7.17-3.08-.37-7.95,2.18-10.39,12.56-12.01,19.8-27.71,20.54-45.25.52-12.32-1.67-24.03-7.56-34.66-12-21.66-37.96-30.23-60.46-19.62-30.03,14.16-35.96,55.12-20.16,84.17,3.15,5.78,7.19,10.23,11.74,14.79,4.08,4.08,3.57,18.87-1.47,26-9.74,13.78-33.39,14.69-50.87,21.23-19.33,7.23-28.14,23.92-31.38,43.81-2.95,18.13-5.46,35.87-7.29,54.29-4.56,45.83-7.7,91.27-9.78,137.26-.83,18.29-1.58,53.11,14.14,61.55,2.68,1.44,5.7,1.9,8.47.37,6.44-3.56,6.29-16.61,5.69-25.45-1.26-18.74-1.2-36.88,1.19-55.49l6.96-54.14,9.28-56.36,6.2-29.02c.37-1.76,3.06-2.84,4.46-2.49,1.64.4,2.74,1.92,3,3.78,5.78,41.36,6.77,68.18-.79,109.84-3.43,18.89-6.39,37.11-7.39,56.34-2.23,43,2.44,89.27,8.58,131.99,2.36,16.43,3.29,32.11,2.27,48.73-1.27,20.72-.97,40.76,1.55,61.32l5.7,46.55,1.86,22.91c.69,8.52-1.85,16.36-5.76,23.79l-6.49,12.35c-1.75,3.32-2.82,7.07-3.11,10.81-.35,4.51,2.25,8.33,6.67,9.75,9.14,2.93,19.33,3.21,28.55.51,14.25-4.16,14.72-18.29,14.06-32.58-.8-17.23-.4-33.75.91-50.99l3.65-48.13c1.28-16.84,1.05-33.02.25-49.83-.49-10.38-.48-20.22.58-30.49l3.83-37.08,5.88-86.69c.29-4.24,2.84-7.07,7.41-7.37Z',
   strokeColor: '#444444',
   strokeWidth: 2,
   strokeLineCap: 'butt',
   strokeLineJoin: 'round'
 };
 
-const paintCanvas = document.getElementById('paintCanvas');
-const outlineCanvas = document.getElementById('outlineCanvas');
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const EXPORT_SIZE = 2500;
+
 const canvasHost = document.getElementById('canvasHost');
 const canvasStage = document.getElementById('canvasStage');
 
@@ -62,30 +63,25 @@ let legendItems = [];
 
 const state = {
   ready: false,
-  logicalWidth: 0,
-  logicalHeight: 0,
-  dpr: Math.max(1, window.devicePixelRatio || 1),
   selectedColor: COLORS[0].value,
   tool: 'brush',
   brushSize: DEFAULT_BRUSH_SIZE,
   drawing: false,
   pointerId: null,
   lastPoint: null,
+  activePath: null,
+  activePathData: '',
+  activeUndoEntry: null,
   legendCollapsed: false,
   undoStack: [],
   resizeObserver: null,
-  maskCanvas: document.createElement('canvas'),
-  outlineLayerCanvas: document.createElement('canvas'),
-  silhouettePath: null,
-  silhouetteViewBox: null,
-  silhouetteStrokeColor: '#444444',
-  silhouetteStrokeWidth: 2,
-  silhouetteStrokeLineCap: 'butt',
-  silhouetteStrokeLineJoin: 'round'
+  svg: null,
+  paintGroup: null,
+  eraserMaskGroup: null,
+  silhouetteSpec: null,
+  silhouetteViewBox: null
 };
 
-let paintCtx = null;
-let outlineCtx = null;
 let resizeRafId = 0;
 
 init();
@@ -96,7 +92,7 @@ function init() {
   bindUiEvents();
   setControlsEnabled(false);
   updateActiveUi();
-  loadSilhouette();
+  createSvgStage();
 }
 
 function buildColorUi() {
@@ -242,8 +238,7 @@ function bindUiEvents() {
     if (!state.ready) {
       return;
     }
-    pushUndoState();
-    paintCtx.clearRect(0, 0, state.logicalWidth, state.logicalHeight);
+    clearDrawing();
     updateUndoButtonState();
   });
 
@@ -251,103 +246,170 @@ function bindUiEvents() {
     saveAsPng();
   });
 
-  paintCanvas.addEventListener('pointerdown', onPointerDown);
-  paintCanvas.addEventListener('pointermove', onPointerMove);
-  paintCanvas.addEventListener('pointerup', onPointerUpOrCancel);
-  paintCanvas.addEventListener('pointercancel', onPointerUpOrCancel);
-  paintCanvas.addEventListener('pointerleave', onPointerUpOrCancel);
-  paintCanvas.addEventListener('contextmenu', (event) => event.preventDefault());
-
   window.addEventListener('resize', requestResize, { passive: true });
 }
 
-function loadSilhouette() {
+async function createSvgStage() {
   setStatus('シルエットを初期化中...');
 
   try {
-    const spec = SILHOUETTE_SPEC;
-    state.logicalWidth = Math.max(1, Math.round(spec.viewBox.width));
-    state.logicalHeight = Math.max(1, Math.round(spec.viewBox.height));
+    const spec = await loadSilhouetteSpec();
+    state.silhouetteSpec = spec;
     state.silhouetteViewBox = spec.viewBox;
-    state.silhouettePath = new Path2D(spec.pathData);
-    state.silhouetteStrokeColor = spec.strokeColor;
-    state.silhouetteStrokeWidth = spec.strokeWidth;
-    state.silhouetteStrokeLineCap = spec.strokeLineCap;
-    state.silhouetteStrokeLineJoin = spec.strokeLineJoin;
 
-    window.requestAnimationFrame(() => {
-      buildMaskAndOutlineFromSvgPath();
-      resizeCanvases();
-      installResizeObserver();
-
-      state.ready = true;
-      setControlsEnabled(true);
-      updateUndoButtonState();
-      setStatus('');
+    const svg = createSvgElement('svg', {
+      id: 'drawingSvg',
+      class: 'svg-canvas',
+      viewBox: viewBoxToString(spec.viewBox),
+      preserveAspectRatio: 'xMidYMid meet',
+      role: 'img',
+      'aria-label': '人型シルエット描画エリア'
     });
+
+    const defs = createSvgElement('defs');
+    const clipPath = createSvgElement('clipPath', {
+      id: 'silhouetteClip',
+      clipPathUnits: 'userSpaceOnUse'
+    });
+    clipPath.appendChild(createSvgElement('path', {
+      d: spec.pathData
+    }));
+
+    const mask = createSvgElement('mask', {
+      id: 'paintEraserMask',
+      maskUnits: 'userSpaceOnUse',
+      x: String(spec.viewBox.minX),
+      y: String(spec.viewBox.minY),
+      width: String(spec.viewBox.width),
+      height: String(spec.viewBox.height)
+    });
+    mask.appendChild(createSvgElement('rect', {
+      x: String(spec.viewBox.minX),
+      y: String(spec.viewBox.minY),
+      width: String(spec.viewBox.width),
+      height: String(spec.viewBox.height),
+      fill: '#FFFFFF'
+    }));
+
+    const eraserMaskGroup = createSvgElement('g', {
+      id: 'eraserMaskGroup',
+      fill: 'none',
+      stroke: '#000000',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round'
+    });
+    mask.appendChild(eraserMaskGroup);
+    defs.append(clipPath, mask);
+
+    const silhouetteFill = createSvgElement('path', {
+      d: spec.pathData,
+      fill: '#FFFFFF'
+    });
+    const paintGroup = createSvgElement('g', {
+      id: 'paintGroup',
+      fill: 'none',
+      'clip-path': 'url(#silhouetteClip)',
+      mask: 'url(#paintEraserMask)'
+    });
+    const outline = createSvgElement('path', {
+      class: 'silhouette-outline',
+      d: spec.pathData,
+      fill: 'none',
+      stroke: spec.strokeColor,
+      'stroke-width': String(spec.strokeWidth),
+      'stroke-linecap': spec.strokeLineCap,
+      'stroke-linejoin': spec.strokeLineJoin
+    });
+
+    svg.append(defs, silhouetteFill, paintGroup, outline);
+    canvasStage.replaceChildren(svg);
+
+    state.svg = svg;
+    state.paintGroup = paintGroup;
+    state.eraserMaskGroup = eraserMaskGroup;
+
+    svg.addEventListener('pointerdown', onPointerDown);
+    svg.addEventListener('pointermove', onPointerMove);
+    svg.addEventListener('pointerup', onPointerUpOrCancel);
+    svg.addEventListener('pointercancel', onPointerUpOrCancel);
+    svg.addEventListener('pointerleave', onPointerUpOrCancel);
+    svg.addEventListener('contextmenu', (event) => event.preventDefault());
+
+    resizeStage();
+    installResizeObserver();
+
+    state.ready = true;
+    setControlsEnabled(true);
+    updateUndoButtonState();
+    setStatus('');
   } catch (error) {
     console.error(error);
     setStatus('シルエット初期化に失敗しました。ブラウザを更新して再読み込みしてください。');
   }
 }
 
-function buildMaskAndOutlineFromSvgPath() {
-  const width = state.logicalWidth;
-  const height = state.logicalHeight;
-
-  const maskCanvas = state.maskCanvas;
-  maskCanvas.width = width;
-  maskCanvas.height = height;
-  const maskCtx = maskCanvas.getContext('2d');
-  maskCtx.clearRect(0, 0, width, height);
-
-  drawSilhouettePath(maskCtx, (ctx, path) => {
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill(path);
-  });
-
-  if (MASK_EDGE_PROTECT_PX > 0) {
-    maskCtx.save();
-    maskCtx.globalCompositeOperation = 'destination-out';
-    drawSilhouettePath(maskCtx, (ctx, path) => {
-      ctx.strokeStyle = '#000000';
-      ctx.lineCap = state.silhouetteStrokeLineCap;
-      ctx.lineJoin = state.silhouetteStrokeLineJoin;
-      ctx.lineWidth = state.silhouetteStrokeWidth + (MASK_EDGE_PROTECT_PX * 2);
-      ctx.stroke(path);
-    });
-    maskCtx.restore();
+async function loadSilhouetteSpec() {
+  try {
+    const response = await fetch(SILHOUETTE_SOURCE, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return parseSilhouetteSvg(await response.text());
+  } catch (error) {
+    console.warn(`Failed to load ${SILHOUETTE_SOURCE}; using embedded fallback.`, error);
+    return FALLBACK_SILHOUETTE_SPEC;
   }
-
-  const outlineCanvasOffscreen = state.outlineLayerCanvas;
-  outlineCanvasOffscreen.width = width;
-  outlineCanvasOffscreen.height = height;
-  const outlineOffscreenCtx = outlineCanvasOffscreen.getContext('2d');
-  outlineOffscreenCtx.clearRect(0, 0, width, height);
-
-  drawSilhouettePath(outlineOffscreenCtx, (ctx, path) => {
-    ctx.strokeStyle = state.silhouetteStrokeColor;
-    ctx.lineCap = state.silhouetteStrokeLineCap;
-    ctx.lineJoin = state.silhouetteStrokeLineJoin;
-    ctx.lineWidth = state.silhouetteStrokeWidth;
-    ctx.stroke(path);
-  });
 }
 
-function drawSilhouettePath(ctx, drawFn) {
-  if (!state.silhouettePath || !state.silhouetteViewBox) {
-    return;
+function parseSilhouetteSvg(svgText) {
+  const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+  const parserError = doc.querySelector('parsererror');
+  if (parserError) {
+    throw new Error('Invalid SVG');
   }
 
-  const viewBox = state.silhouetteViewBox;
-  const scaleX = state.logicalWidth / viewBox.width;
-  const scaleY = state.logicalHeight / viewBox.height;
+  const svg = doc.querySelector('svg');
+  const path = doc.querySelector('path[d]');
+  const viewBox = parseViewBox(svg ? svg.getAttribute('viewBox') : '');
 
-  ctx.save();
-  ctx.translate(-viewBox.minX * scaleX, -viewBox.minY * scaleY);
-  ctx.scale(scaleX, scaleY);
-  drawFn(ctx, state.silhouettePath);
-  ctx.restore();
+  if (!path || !viewBox) {
+    throw new Error('SVG must contain a viewBox and at least one path');
+  }
+
+  return {
+    label: SILHOUETTE_SOURCE,
+    viewBox,
+    pathData: path.getAttribute('d'),
+    strokeColor: path.getAttribute('stroke') || FALLBACK_SILHOUETTE_SPEC.strokeColor,
+    strokeWidth: Number(path.getAttribute('stroke-width')) || FALLBACK_SILHOUETTE_SPEC.strokeWidth,
+    strokeLineCap: path.getAttribute('stroke-linecap') || FALLBACK_SILHOUETTE_SPEC.strokeLineCap,
+    strokeLineJoin: path.getAttribute('stroke-linejoin') || FALLBACK_SILHOUETTE_SPEC.strokeLineJoin
+  };
+}
+
+function parseViewBox(rawViewBox) {
+  const values = String(rawViewBox).trim().split(/[\s,]+/).map(Number);
+  if (values.length !== 4 || values.some((value) => !Number.isFinite(value))) {
+    return null;
+  }
+  return {
+    minX: values[0],
+    minY: values[1],
+    width: values[2],
+    height: values[3]
+  };
+}
+
+function createSvgElement(name, attrs = {}) {
+  const element = document.createElementNS(SVG_NS, name);
+  Object.entries(attrs).forEach(([key, value]) => {
+    element.setAttribute(key, value);
+  });
+  return element;
+}
+
+function viewBoxToString(viewBox) {
+  return `${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`;
 }
 
 function installResizeObserver() {
@@ -360,55 +422,29 @@ function installResizeObserver() {
 }
 
 function requestResize() {
-  if (!state.logicalWidth || !state.logicalHeight) {
-    return;
-  }
   if (resizeRafId) {
     return;
   }
   resizeRafId = window.requestAnimationFrame(() => {
     resizeRafId = 0;
-    resizeCanvases();
+    resizeStage();
   });
 }
 
-function resizeCanvases() {
-  if (!state.logicalWidth || !state.logicalHeight) {
+function resizeStage() {
+  if (!state.silhouetteViewBox) {
     return;
   }
-
-  const preservedPaint = createPaintSnapshot();
-  state.dpr = Math.max(1, window.devicePixelRatio || 1);
 
   const { cssWidth, cssHeight } = calculateStageSize();
   canvasStage.style.width = `${cssWidth}px`;
   canvasStage.style.height = `${cssHeight}px`;
-
-  [paintCanvas, outlineCanvas].forEach((canvas) => {
-    canvas.style.width = `${cssWidth}px`;
-    canvas.style.height = `${cssHeight}px`;
-    canvas.width = Math.round(state.logicalWidth * state.dpr);
-    canvas.height = Math.round(state.logicalHeight * state.dpr);
-  });
-
-  paintCtx = paintCanvas.getContext('2d');
-  outlineCtx = outlineCanvas.getContext('2d');
-  configureContext(paintCtx);
-  configureContext(outlineCtx);
-
-  paintCtx.clearRect(0, 0, state.logicalWidth, state.logicalHeight);
-  if (preservedPaint) {
-    paintCtx.drawImage(preservedPaint, 0, 0, state.logicalWidth, state.logicalHeight);
-    applyMaskToPaint();
-  }
-
-  renderOutline();
 }
 
 function calculateStageSize() {
   const hostWidth = Math.max(1, canvasHost.clientWidth - 4);
   const hostHeight = Math.max(1, canvasHost.clientHeight - 4);
-  const aspect = state.logicalWidth / state.logicalHeight;
+  const aspect = state.silhouetteViewBox.width / state.silhouetteViewBox.height;
 
   let cssWidth = hostWidth;
   let cssHeight = cssWidth / aspect;
@@ -424,33 +460,6 @@ function calculateStageSize() {
   };
 }
 
-function configureContext(ctx) {
-  ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.imageSmoothingEnabled = true;
-}
-
-function renderOutline() {
-  if (!outlineCtx) {
-    return;
-  }
-  outlineCtx.clearRect(0, 0, state.logicalWidth, state.logicalHeight);
-  outlineCtx.drawImage(state.outlineLayerCanvas, 0, 0, state.logicalWidth, state.logicalHeight);
-}
-
-function createPaintSnapshot() {
-  if (!paintCanvas.width || !paintCanvas.height || !state.logicalWidth || !state.logicalHeight) {
-    return null;
-  }
-  const snapshot = document.createElement('canvas');
-  snapshot.width = state.logicalWidth;
-  snapshot.height = state.logicalHeight;
-  const snapCtx = snapshot.getContext('2d');
-  snapCtx.drawImage(paintCanvas, 0, 0, state.logicalWidth, state.logicalHeight);
-  return snapshot;
-}
-
 function onPointerDown(event) {
   if (!state.ready) {
     return;
@@ -462,11 +471,12 @@ function onPointerDown(event) {
   event.preventDefault();
   state.drawing = true;
   state.pointerId = event.pointerId;
-  state.lastPoint = toCanvasPoint(event);
-  paintCanvas.setPointerCapture(event.pointerId);
+  state.lastPoint = toSvgPoint(event);
+  state.activePathData = pointToInitialPath(state.lastPoint);
+  state.activePath = createStrokeElement(state.tool, state.activePathData);
+  state.activeUndoEntry = appendStrokeElement(state.tool, state.activePath);
 
-  pushUndoState();
-  drawSegment(state.lastPoint, state.lastPoint);
+  state.svg.setPointerCapture(event.pointerId);
 }
 
 function onPointerMove(event) {
@@ -475,8 +485,8 @@ function onPointerMove(event) {
   }
   event.preventDefault();
 
-  const currentPoint = toCanvasPoint(event);
-  drawSegment(state.lastPoint, currentPoint);
+  const currentPoint = toSvgPoint(event);
+  extendActivePath(currentPoint);
   state.lastPoint = currentPoint;
 }
 
@@ -489,73 +499,75 @@ function onPointerUpOrCancel(event) {
   state.drawing = false;
   state.pointerId = null;
   state.lastPoint = null;
+  commitActiveStroke();
 
-  if (paintCanvas.hasPointerCapture(event.pointerId)) {
-    paintCanvas.releasePointerCapture(event.pointerId);
-  }
-
-  if (state.tool !== 'eraser') {
-    applyMaskToPaint();
+  if (state.svg.hasPointerCapture(event.pointerId)) {
+    state.svg.releasePointerCapture(event.pointerId);
   }
 }
 
-function drawSegment(from, to) {
-  if (!paintCtx) {
+function pointToInitialPath(point) {
+  return `M ${formatNumber(point.x)} ${formatNumber(point.y)} l 0.001 0`;
+}
+
+function createStrokeElement(tool, pathData) {
+  const attrs = {
+    d: pathData,
+    fill: 'none',
+    stroke: tool === 'eraser' ? '#000000' : state.selectedColor,
+    'stroke-width': String(state.brushSize),
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round'
+  };
+
+  return createSvgElement('path', attrs);
+}
+
+function appendStrokeElement(tool, element) {
+  if (tool === 'eraser') {
+    state.eraserMaskGroup.appendChild(element);
+    return { type: 'stroke', element };
+  }
+
+  state.paintGroup.appendChild(element);
+  return { type: 'stroke', element };
+}
+
+function extendActivePath(point) {
+  if (!state.activePath) {
     return;
   }
 
-  paintCtx.save();
-  paintCtx.lineWidth = state.brushSize;
-
-  if (state.tool === 'eraser') {
-    paintCtx.globalCompositeOperation = 'destination-out';
-    paintCtx.strokeStyle = 'rgba(0, 0, 0, 1)';
-    paintCtx.fillStyle = 'rgba(0, 0, 0, 1)';
-  } else {
-    paintCtx.globalCompositeOperation = 'source-over';
-    paintCtx.strokeStyle = state.selectedColor;
-    paintCtx.fillStyle = state.selectedColor;
-  }
-
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-
-  if ((dx * dx) + (dy * dy) < 0.001) {
-    paintCtx.beginPath();
-    paintCtx.arc(from.x, from.y, state.brushSize / 2, 0, Math.PI * 2);
-    paintCtx.fill();
-  } else {
-    paintCtx.beginPath();
-    paintCtx.moveTo(from.x, from.y);
-    paintCtx.lineTo(to.x, to.y);
-    paintCtx.stroke();
-  }
-
-  paintCtx.restore();
-
-  if (state.tool !== 'eraser') {
-    applyMaskToPaint();
-  }
+  state.activePathData += ` L ${formatNumber(point.x)} ${formatNumber(point.y)}`;
+  state.activePath.setAttribute('d', state.activePathData);
 }
 
-function applyMaskToPaint() {
-  if (!paintCtx || !state.maskCanvas.width || !state.maskCanvas.height) {
-    return;
+function commitActiveStroke() {
+  if (state.activeUndoEntry) {
+    pushUndoEntry(state.activeUndoEntry);
   }
-  paintCtx.save();
-  paintCtx.globalCompositeOperation = 'destination-in';
-  paintCtx.drawImage(state.maskCanvas, 0, 0, state.logicalWidth, state.logicalHeight);
-  paintCtx.restore();
+
+  state.activePath = null;
+  state.activePathData = '';
+  state.activeUndoEntry = null;
 }
 
-function toCanvasPoint(event) {
-  const rect = paintCanvas.getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width) * state.logicalWidth;
-  const y = ((event.clientY - rect.top) / rect.height) * state.logicalHeight;
+function toSvgPoint(event) {
+  const point = state.svg.createSVGPoint();
+  point.x = event.clientX;
+  point.y = event.clientY;
+
+  const transform = state.svg.getScreenCTM();
+  if (!transform) {
+    return { x: 0, y: 0 };
+  }
+
+  const svgPoint = point.matrixTransform(transform.inverse());
+  const viewBox = state.silhouetteViewBox;
 
   return {
-    x: clamp(x, 0, state.logicalWidth),
-    y: clamp(y, 0, state.logicalHeight)
+    x: clamp(svgPoint.x, viewBox.minX, viewBox.minX + viewBox.width),
+    y: clamp(svgPoint.y, viewBox.minY, viewBox.minY + viewBox.height)
   };
 }
 
@@ -563,12 +575,12 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function pushUndoState() {
-  const snapshot = createPaintSnapshot();
-  if (!snapshot) {
-    return;
-  }
-  state.undoStack.push(snapshot);
+function formatNumber(value) {
+  return Number(value).toFixed(3).replace(/\.?0+$/, '');
+}
+
+function pushUndoEntry(entry) {
+  state.undoStack.push(entry);
   if (state.undoStack.length > MAX_UNDO_STEPS) {
     state.undoStack.shift();
   }
@@ -576,15 +588,31 @@ function pushUndoState() {
 }
 
 function undo() {
-  if (!state.undoStack.length || !paintCtx) {
+  if (!state.undoStack.length) {
     return;
   }
 
-  const snapshot = state.undoStack.pop();
-  paintCtx.clearRect(0, 0, state.logicalWidth, state.logicalHeight);
-  paintCtx.drawImage(snapshot, 0, 0, state.logicalWidth, state.logicalHeight);
-  applyMaskToPaint();
+  const entry = state.undoStack.pop();
+  if (entry.type === 'stroke') {
+    entry.element.remove();
+  } else if (entry.type === 'clear') {
+    state.paintGroup.replaceChildren(...entry.paintChildren);
+    state.eraserMaskGroup.replaceChildren(...entry.eraserChildren);
+  }
+
   updateUndoButtonState();
+}
+
+function clearDrawing() {
+  if (!state.paintGroup.childElementCount && !state.eraserMaskGroup.childElementCount) {
+    return;
+  }
+
+  const paintChildren = Array.from(state.paintGroup.children);
+  const eraserChildren = Array.from(state.eraserMaskGroup.children);
+  pushUndoEntry({ type: 'clear', paintChildren, eraserChildren });
+  state.paintGroup.replaceChildren();
+  state.eraserMaskGroup.replaceChildren();
 }
 
 function saveAsPng() {
@@ -592,21 +620,45 @@ function saveAsPng() {
     return;
   }
 
+  const serializedSvg = serializeCurrentSvg();
   const merged = document.createElement('canvas');
-  merged.width = state.logicalWidth;
-  merged.height = state.logicalHeight;
+  merged.width = EXPORT_SIZE;
+  merged.height = EXPORT_SIZE;
   const mergedCtx = merged.getContext('2d');
 
-  mergedCtx.drawImage(paintCanvas, 0, 0, state.logicalWidth, state.logicalHeight);
-  mergedCtx.drawImage(state.outlineLayerCanvas, 0, 0, state.logicalWidth, state.logicalHeight);
+  const image = new Image();
+  const svgUrl = URL.createObjectURL(new Blob([serializedSvg], { type: 'image/svg+xml;charset=utf-8' }));
 
-  const now = new Date();
-  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+  image.onload = () => {
+    mergedCtx.fillStyle = '#FFFFFF';
+    mergedCtx.fillRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
+    mergedCtx.drawImage(image, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+    URL.revokeObjectURL(svgUrl);
 
-  const link = document.createElement('a');
-  link.href = merged.toDataURL('image/png');
-  link.download = buildExportFilename(stamp);
-  link.click();
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+
+    const link = document.createElement('a');
+    link.href = merged.toDataURL('image/png');
+    link.download = buildExportFilename(stamp);
+    link.click();
+  };
+
+  image.onerror = () => {
+    URL.revokeObjectURL(svgUrl);
+    setStatus('PNG保存用の画像生成に失敗しました。');
+  };
+
+  image.src = svgUrl;
+}
+
+function serializeCurrentSvg() {
+  const clone = state.svg.cloneNode(true);
+  clone.setAttribute('xmlns', SVG_NS);
+  clone.setAttribute('width', String(EXPORT_SIZE));
+  clone.setAttribute('height', String(EXPORT_SIZE));
+  clone.removeAttribute('class');
+  return new XMLSerializer().serializeToString(clone);
 }
 
 function buildExportFilename(stamp) {
