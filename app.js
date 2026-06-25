@@ -100,6 +100,8 @@ const state = {
 };
 
 let resizeRafId = 0;
+const activePointers = new Map();
+let pinchState = null;
 
 init();
 
@@ -254,15 +256,15 @@ function bindUiEvents() {
   });
 
   zoomOutBtn.addEventListener('click', () => {
-    setZoom(state.zoom - ZOOM_STEP);
+    setZoom(state.zoom - ZOOM_STEP, getViewportFocalPoint());
   });
 
   zoomInBtn.addEventListener('click', () => {
-    setZoom(state.zoom + ZOOM_STEP);
+    setZoom(state.zoom + ZOOM_STEP, getViewportFocalPoint());
   });
 
   zoomResetBtn.addEventListener('click', () => {
-    setZoom(DEFAULT_ZOOM);
+    setZoom(DEFAULT_ZOOM, getViewportFocalPoint());
   });
 
   eraserBtn.addEventListener('click', () => {
@@ -573,9 +575,32 @@ function calculateStageSize() {
   };
 }
 
-function setZoom(nextZoom) {
-  state.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+function setZoom(nextZoom, focalPoint = getViewportFocalPoint()) {
+  applyZoom(nextZoom, {
+    focalX: focalPoint.x,
+    focalY: focalPoint.y
+  });
+}
+
+function applyZoom(nextZoom, options = {}) {
+  const previousZoom = state.zoom;
+  const zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+  const focalX = options.focalX ?? (canvasHost.clientWidth / 2);
+  const focalY = options.focalY ?? (canvasHost.clientHeight / 2);
+  const contentX = options.contentX ?? ((canvasHost.scrollLeft + focalX) / previousZoom);
+  const contentY = options.contentY ?? ((canvasHost.scrollTop + focalY) / previousZoom);
+
+  state.zoom = zoom;
   resizeStage();
+  canvasHost.scrollLeft = (contentX * zoom) - focalX;
+  canvasHost.scrollTop = (contentY * zoom) - focalY;
+}
+
+function getViewportFocalPoint() {
+  return {
+    x: canvasHost.clientWidth / 2,
+    y: canvasHost.clientHeight / 2
+  };
 }
 
 function updateZoomUi() {
@@ -602,17 +627,34 @@ function onPointerDown(event) {
   }
 
   event.preventDefault();
+  activePointers.set(event.pointerId, getPointerClientPoint(event));
+  state.svg.setPointerCapture(event.pointerId);
+
+  if (event.pointerType === 'touch' && activePointers.size >= 2) {
+    cancelActiveStroke();
+    startPinchGesture();
+    return;
+  }
+
   state.drawing = true;
   state.pointerId = event.pointerId;
   state.lastPoint = toSvgPoint(event);
   state.activePathData = pointToInitialPath(state.lastPoint);
   state.activePath = createStrokeElement(state.tool, state.activePathData);
   state.activeUndoEntry = appendStrokeElement(state.tool, state.activePath);
-
-  state.svg.setPointerCapture(event.pointerId);
 }
 
 function onPointerMove(event) {
+  if (activePointers.has(event.pointerId)) {
+    activePointers.set(event.pointerId, getPointerClientPoint(event));
+  }
+
+  if (pinchState && activePointers.size >= 2) {
+    event.preventDefault();
+    updatePinchGesture();
+    return;
+  }
+
   if (!state.drawing || event.pointerId !== state.pointerId) {
     return;
   }
@@ -624,7 +666,20 @@ function onPointerMove(event) {
 }
 
 function onPointerUpOrCancel(event) {
+  activePointers.delete(event.pointerId);
+
+  if (pinchState) {
+    if (activePointers.size < 2) {
+      pinchState = null;
+    } else {
+      startPinchGesture();
+    }
+  }
+
   if (!state.drawing || event.pointerId !== state.pointerId) {
+    if (state.svg.hasPointerCapture(event.pointerId)) {
+      state.svg.releasePointerCapture(event.pointerId);
+    }
     return;
   }
 
@@ -637,6 +692,76 @@ function onPointerUpOrCancel(event) {
   if (state.svg.hasPointerCapture(event.pointerId)) {
     state.svg.releasePointerCapture(event.pointerId);
   }
+}
+
+function getPointerClientPoint(event) {
+  return {
+    x: event.clientX,
+    y: event.clientY
+  };
+}
+
+function getTwoTouchGesture() {
+  const points = Array.from(activePointers.values()).slice(0, 2);
+  if (points.length < 2) {
+    return null;
+  }
+
+  const [a, b] = points;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  return {
+    centerX: (a.x + b.x) / 2,
+    centerY: (a.y + b.y) / 2,
+    distance: Math.max(1, Math.hypot(dx, dy))
+  };
+}
+
+function startPinchGesture() {
+  const gesture = getTwoTouchGesture();
+  if (!gesture) {
+    pinchState = null;
+    return;
+  }
+
+  const hostRect = canvasHost.getBoundingClientRect();
+  const focalX = gesture.centerX - hostRect.left;
+  const focalY = gesture.centerY - hostRect.top;
+
+  pinchState = {
+    startDistance: gesture.distance,
+    startZoom: state.zoom,
+    startContentX: (canvasHost.scrollLeft + focalX) / state.zoom,
+    startContentY: (canvasHost.scrollTop + focalY) / state.zoom
+  };
+}
+
+function updatePinchGesture() {
+  const gesture = getTwoTouchGesture();
+  if (!gesture || !pinchState) {
+    return;
+  }
+
+  const hostRect = canvasHost.getBoundingClientRect();
+  applyZoom(pinchState.startZoom * (gesture.distance / pinchState.startDistance), {
+    focalX: gesture.centerX - hostRect.left,
+    focalY: gesture.centerY - hostRect.top,
+    contentX: pinchState.startContentX,
+    contentY: pinchState.startContentY
+  });
+}
+
+function cancelActiveStroke() {
+  if (state.activePath) {
+    state.activePath.remove();
+  }
+
+  state.drawing = false;
+  state.pointerId = null;
+  state.lastPoint = null;
+  state.activePath = null;
+  state.activePathData = '';
+  state.activeUndoEntry = null;
 }
 
 function pointToInitialPath(point) {
