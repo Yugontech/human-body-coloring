@@ -29,6 +29,10 @@ const LEGEND_ITEMS = [
 
 const DEFAULT_BRUSH_SIZE = 10;
 const MAX_UNDO_STEPS = 20;
+const DEFAULT_ZOOM = 1;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2.5;
+const ZOOM_STEP = 0.25;
 const LEGEND_COLLAPSED_STORAGE_KEY = 'human-body-coloring.legendCollapsed';
 const SILHOUETTE_SOURCE = 'silhouette.svg';
 const FALLBACK_SILHOUETTE_SPEC = {
@@ -53,6 +57,11 @@ const colorLegend = document.getElementById('colorLegend');
 const legendToggleBtn = document.getElementById('legendToggleBtn');
 const legendList = document.getElementById('legendList');
 const brushPresetButtons = Array.from(document.querySelectorAll('.brush-preset-btn'));
+const regionButtons = Array.from(document.querySelectorAll('.mode-btn'));
+const zoomOutBtn = document.getElementById('zoomOutBtn');
+const zoomInBtn = document.getElementById('zoomInBtn');
+const zoomResetBtn = document.getElementById('zoomResetBtn');
+const zoomValue = document.getElementById('zoomValue');
 const exportIdInput = document.getElementById('exportIdInput');
 const eraserBtn = document.getElementById('eraserBtn');
 const undoBtn = document.getElementById('undoBtn');
@@ -66,7 +75,9 @@ const state = {
   ready: false,
   selectedColor: COLORS[0].value,
   tool: 'brush',
+  drawRegion: 'inside',
   brushSize: DEFAULT_BRUSH_SIZE,
+  zoom: DEFAULT_ZOOM,
   drawing: false,
   pointerId: null,
   lastPoint: null,
@@ -80,6 +91,10 @@ const state = {
   svg: null,
   paintGroup: null,
   eraserMaskGroup: null,
+  insidePaintGroup: null,
+  outsidePaintGroup: null,
+  insideEraserMaskGroup: null,
+  outsideEraserMaskGroup: null,
   silhouetteSpec: null,
   silhouetteViewBox: null
 };
@@ -227,6 +242,29 @@ function bindUiEvents() {
     });
   });
 
+  regionButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const nextRegion = button.dataset.region;
+      if (nextRegion !== 'inside' && nextRegion !== 'outside') {
+        return;
+      }
+      state.drawRegion = nextRegion;
+      updateActiveUi();
+    });
+  });
+
+  zoomOutBtn.addEventListener('click', () => {
+    setZoom(state.zoom - ZOOM_STEP);
+  });
+
+  zoomInBtn.addEventListener('click', () => {
+    setZoom(state.zoom + ZOOM_STEP);
+  });
+
+  zoomResetBtn.addEventListener('click', () => {
+    setZoom(DEFAULT_ZOOM);
+  });
+
   eraserBtn.addEventListener('click', () => {
     state.tool = 'eraser';
     updateActiveUi();
@@ -281,15 +319,15 @@ async function createSvgStage() {
       d: spec.clipPathData
     }));
 
-    const mask = createSvgElement('mask', {
-      id: 'paintEraserMask',
+    const insideMask = createSvgElement('mask', {
+      id: 'insidePaintEraserMask',
       maskUnits: 'userSpaceOnUse',
       x: String(spec.viewBox.minX),
       y: String(spec.viewBox.minY),
       width: String(spec.viewBox.width),
       height: String(spec.viewBox.height)
     });
-    mask.appendChild(createSvgElement('rect', {
+    insideMask.appendChild(createSvgElement('rect', {
       x: String(spec.viewBox.minX),
       y: String(spec.viewBox.minY),
       width: String(spec.viewBox.width),
@@ -297,34 +335,72 @@ async function createSvgStage() {
       fill: '#FFFFFF'
     }));
 
-    const eraserMaskGroup = createSvgElement('g', {
-      id: 'eraserMaskGroup',
+    const insideEraserMaskGroup = createSvgElement('g', {
+      id: 'insideEraserMaskGroup',
       fill: 'none',
       stroke: '#000000',
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round'
     });
-    mask.appendChild(eraserMaskGroup);
-    defs.append(clipPath, mask);
+    insideMask.appendChild(insideEraserMaskGroup);
+
+    const outsideMask = createSvgElement('mask', {
+      id: 'outsidePaintMask',
+      maskUnits: 'userSpaceOnUse',
+      x: String(spec.viewBox.minX),
+      y: String(spec.viewBox.minY),
+      width: String(spec.viewBox.width),
+      height: String(spec.viewBox.height)
+    });
+    outsideMask.appendChild(createSvgElement('rect', {
+      x: String(spec.viewBox.minX),
+      y: String(spec.viewBox.minY),
+      width: String(spec.viewBox.width),
+      height: String(spec.viewBox.height),
+      fill: '#FFFFFF'
+    }));
+    outsideMask.appendChild(createSvgElement('path', {
+      d: spec.clipPathData,
+      fill: '#000000'
+    }));
+
+    const outsideEraserMaskGroup = createSvgElement('g', {
+      id: 'outsideEraserMaskGroup',
+      fill: 'none',
+      stroke: '#000000',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round'
+    });
+    outsideMask.appendChild(outsideEraserMaskGroup);
+    defs.append(clipPath, insideMask, outsideMask);
 
     const silhouetteFill = createSvgElement('path', {
       d: spec.clipPathData,
       fill: '#FFFFFF'
     });
-    const paintGroup = createSvgElement('g', {
-      id: 'paintGroup',
+    const outsidePaintGroup = createSvgElement('g', {
+      id: 'outsidePaintGroup',
+      fill: 'none',
+      mask: 'url(#outsidePaintMask)'
+    });
+    const insidePaintGroup = createSvgElement('g', {
+      id: 'insidePaintGroup',
       fill: 'none',
       'clip-path': 'url(#silhouetteClip)',
-      mask: 'url(#paintEraserMask)'
+      mask: 'url(#insidePaintEraserMask)'
     });
     const outline = createOutlineElement(spec);
 
-    svg.append(defs, silhouetteFill, paintGroup, outline);
+    svg.append(defs, outsidePaintGroup, silhouetteFill, insidePaintGroup, outline);
     canvasStage.replaceChildren(svg);
 
     state.svg = svg;
-    state.paintGroup = paintGroup;
-    state.eraserMaskGroup = eraserMaskGroup;
+    state.paintGroup = insidePaintGroup;
+    state.eraserMaskGroup = insideEraserMaskGroup;
+    state.insidePaintGroup = insidePaintGroup;
+    state.outsidePaintGroup = outsidePaintGroup;
+    state.insideEraserMaskGroup = insideEraserMaskGroup;
+    state.outsideEraserMaskGroup = outsideEraserMaskGroup;
 
     svg.addEventListener('pointerdown', onPointerDown);
     svg.addEventListener('pointermove', onPointerMove);
@@ -473,8 +549,9 @@ function resizeStage() {
   }
 
   const { cssWidth, cssHeight } = calculateStageSize();
-  canvasStage.style.width = `${cssWidth}px`;
-  canvasStage.style.height = `${cssHeight}px`;
+  canvasStage.style.width = `${Math.floor(cssWidth * state.zoom)}px`;
+  canvasStage.style.height = `${Math.floor(cssHeight * state.zoom)}px`;
+  updateZoomUi();
 }
 
 function calculateStageSize() {
@@ -494,6 +571,26 @@ function calculateStageSize() {
     cssWidth: Math.max(1, Math.floor(cssWidth)),
     cssHeight: Math.max(1, Math.floor(cssHeight))
   };
+}
+
+function setZoom(nextZoom) {
+  state.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+  resizeStage();
+}
+
+function updateZoomUi() {
+  if (zoomValue) {
+    zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+  }
+  if (zoomOutBtn) {
+    zoomOutBtn.disabled = !state.ready || state.zoom <= MIN_ZOOM;
+  }
+  if (zoomInBtn) {
+    zoomInBtn.disabled = !state.ready || state.zoom >= MAX_ZOOM;
+  }
+  if (zoomResetBtn) {
+    zoomResetBtn.disabled = !state.ready || state.zoom === DEFAULT_ZOOM;
+  }
 }
 
 function onPointerDown(event) {
@@ -557,6 +654,7 @@ function createStrokeElement(tool, pathData) {
     'stroke-linejoin': 'round',
     'data-order': String(order),
     'data-tool': tool,
+    'data-region': state.drawRegion,
     'data-brush-size': String(state.brushSize),
     'data-created-at': new Date().toISOString()
   };
@@ -572,12 +670,20 @@ function appendStrokeElement(tool, element) {
   state.nextStrokeOrder += 1;
 
   if (tool === 'eraser') {
-    state.eraserMaskGroup.appendChild(element);
+    getEraserMaskGroupForRegion(state.drawRegion).appendChild(element);
     return { type: 'stroke', element };
   }
 
-  state.paintGroup.appendChild(element);
+  getPaintGroupForRegion(state.drawRegion).appendChild(element);
   return { type: 'stroke', element };
+}
+
+function getPaintGroupForRegion(region) {
+  return region === 'outside' ? state.outsidePaintGroup : state.insidePaintGroup;
+}
+
+function getEraserMaskGroupForRegion(region) {
+  return region === 'outside' ? state.outsideEraserMaskGroup : state.insideEraserMaskGroup;
 }
 
 function extendActivePath(point) {
@@ -643,23 +749,34 @@ function undo() {
   if (entry.type === 'stroke') {
     entry.element.remove();
   } else if (entry.type === 'clear') {
-    state.paintGroup.replaceChildren(...entry.paintChildren);
-    state.eraserMaskGroup.replaceChildren(...entry.eraserChildren);
+    state.insidePaintGroup.replaceChildren(...entry.insidePaintChildren);
+    state.outsidePaintGroup.replaceChildren(...entry.outsidePaintChildren);
+    state.insideEraserMaskGroup.replaceChildren(...entry.insideEraserChildren);
+    state.outsideEraserMaskGroup.replaceChildren(...entry.outsideEraserChildren);
   }
 
   updateUndoButtonState();
 }
 
 function clearDrawing() {
-  if (!state.paintGroup.childElementCount && !state.eraserMaskGroup.childElementCount) {
+  if (
+    !state.insidePaintGroup.childElementCount &&
+    !state.outsidePaintGroup.childElementCount &&
+    !state.insideEraserMaskGroup.childElementCount &&
+    !state.outsideEraserMaskGroup.childElementCount
+  ) {
     return;
   }
 
-  const paintChildren = Array.from(state.paintGroup.children);
-  const eraserChildren = Array.from(state.eraserMaskGroup.children);
-  pushUndoEntry({ type: 'clear', paintChildren, eraserChildren });
-  state.paintGroup.replaceChildren();
-  state.eraserMaskGroup.replaceChildren();
+  const insidePaintChildren = Array.from(state.insidePaintGroup.children);
+  const outsidePaintChildren = Array.from(state.outsidePaintGroup.children);
+  const insideEraserChildren = Array.from(state.insideEraserMaskGroup.children);
+  const outsideEraserChildren = Array.from(state.outsideEraserMaskGroup.children);
+  pushUndoEntry({ type: 'clear', insidePaintChildren, outsidePaintChildren, insideEraserChildren, outsideEraserChildren });
+  state.insidePaintGroup.replaceChildren();
+  state.outsidePaintGroup.replaceChildren();
+  state.insideEraserMaskGroup.replaceChildren();
+  state.outsideEraserMaskGroup.replaceChildren();
 }
 
 function saveAsPng() {
@@ -667,10 +784,11 @@ function saveAsPng() {
     return;
   }
 
-  const serializedSvg = serializeCurrentSvg({ includeMetadata: false, width: EXPORT_SIZE, height: EXPORT_SIZE });
+  const { width, height } = getExportDimensions();
+  const serializedSvg = serializeCurrentSvg({ includeMetadata: false, width, height });
   const merged = document.createElement('canvas');
-  merged.width = EXPORT_SIZE;
-  merged.height = EXPORT_SIZE;
+  merged.width = width;
+  merged.height = height;
   const mergedCtx = merged.getContext('2d');
 
   const image = new Image();
@@ -678,12 +796,11 @@ function saveAsPng() {
 
   image.onload = () => {
     mergedCtx.fillStyle = '#FFFFFF';
-    mergedCtx.fillRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
-    mergedCtx.drawImage(image, 0, 0, EXPORT_SIZE, EXPORT_SIZE);
+    mergedCtx.fillRect(0, 0, width, height);
+    mergedCtx.drawImage(image, 0, 0, width, height);
     URL.revokeObjectURL(svgUrl);
 
-    const now = new Date();
-    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+    const stamp = buildTimestamp(new Date());
 
     const link = document.createElement('a');
     link.href = merged.toDataURL('image/png');
@@ -697,6 +814,22 @@ function saveAsPng() {
   };
 
   image.src = svgUrl;
+}
+
+function getExportDimensions() {
+  const viewBox = state.silhouetteViewBox || FALLBACK_SILHOUETTE_SPEC.viewBox;
+  const aspect = viewBox.width / viewBox.height;
+  if (aspect >= 1) {
+    return {
+      width: EXPORT_SIZE,
+      height: Math.round(EXPORT_SIZE / aspect)
+    };
+  }
+
+  return {
+    width: Math.round(EXPORT_SIZE * aspect),
+    height: EXPORT_SIZE
+  };
 }
 
 function saveAsSvg() {
@@ -735,6 +868,7 @@ function serializeCurrentSvg(options = {}) {
 
   if (includeMetadata) {
     clone.insertBefore(createExportMetadataElement(), clone.firstChild);
+    clone.insertBefore(createExportHistoryElement(), clone.querySelector('.silhouette-outline'));
   }
 
   return new XMLSerializer().serializeToString(clone);
@@ -764,21 +898,47 @@ function buildExportMetadata() {
   };
 }
 
+function createExportHistoryElement() {
+  const group = createSvgElement('g', {
+    id: 'paint-history',
+    display: 'none',
+    'data-description': 'Stroke history sorted by data-order. Eraser strokes are preserved as history entries.'
+  });
+
+  collectStrokeElementsInOrder().forEach((element) => {
+    const clone = element.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.removeAttribute('class');
+    clone.removeAttribute('mask');
+    clone.removeAttribute('clip-path');
+    group.appendChild(clone);
+  });
+
+  return group;
+}
+
 function collectStrokeMetadata() {
-  return [
-    ...Array.from(state.paintGroup.children),
-    ...Array.from(state.eraserMaskGroup.children)
-  ]
+  return collectStrokeElementsInOrder()
     .map((element) => ({
       order: Number(element.dataset.order),
       tool: element.dataset.tool,
+      region: element.dataset.region,
       color: element.dataset.color || null,
       brushSize: Number(element.dataset.brushSize),
       createdAt: element.dataset.createdAt,
       pathData: element.getAttribute('d')
-    }))
-    .filter((item) => Number.isFinite(item.order))
-    .sort((a, b) => a.order - b.order);
+    }));
+}
+
+function collectStrokeElementsInOrder() {
+  return [
+    ...Array.from(state.insidePaintGroup.children),
+    ...Array.from(state.outsidePaintGroup.children),
+    ...Array.from(state.insideEraserMaskGroup.children),
+    ...Array.from(state.outsideEraserMaskGroup.children)
+  ]
+    .filter((element) => Number.isFinite(Number(element.dataset.order)))
+    .sort((a, b) => Number(a.dataset.order) - Number(b.dataset.order));
 }
 
 function buildTimestamp(date) {
@@ -806,6 +966,10 @@ function setControlsEnabled(enabled) {
   const controls = [
     ...paletteButtons,
     ...brushPresetButtons,
+    ...regionButtons,
+    zoomOutBtn,
+    zoomInBtn,
+    zoomResetBtn,
     eraserBtn,
     undoBtn,
     clearBtn,
@@ -813,8 +977,11 @@ function setControlsEnabled(enabled) {
     saveSvgBtn
   ];
   controls.forEach((el) => {
-    el.disabled = !enabled;
+    if (el) {
+      el.disabled = !enabled;
+    }
   });
+  updateZoomUi();
 }
 
 function updateUndoButtonState() {
@@ -831,6 +998,10 @@ function updateActiveUi() {
     const size = Number(button.dataset.size);
     const active = Number.isFinite(size) && size === state.brushSize;
     button.classList.toggle('active', active);
+  });
+
+  regionButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.region === state.drawRegion);
   });
 
   legendItems.forEach((item) => {

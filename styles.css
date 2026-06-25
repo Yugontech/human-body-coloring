@@ -98,7 +98,8 @@ body {
 
 .palette-btn,
 .tool-btn,
-.brush-preset-btn {
+.brush-preset-btn,
+.mode-btn {
   appearance: none;
   border: 2px solid #4a7383;
   border-radius: 12px;
@@ -118,7 +119,8 @@ body {
 
 .palette-btn:hover:not(:disabled),
 .tool-btn:hover:not(:disabled),
-.brush-preset-btn:hover:not(:disabled) {
+.brush-preset-btn:hover:not(:disabled),
+.mode-btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
@@ -132,7 +134,8 @@ body {
 
 .palette-btn.active,
 .tool-btn.active,
-.brush-preset-btn.active {
+.brush-preset-btn.active,
+.mode-btn.active {
   background: var(--active-bg);
   border-color: var(--focus);
 }
@@ -154,6 +157,29 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.zoom-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.zoom-value {
+  min-width: 54px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.zoom-reset-btn {
+  grid-column: 1 / -1;
 }
 
 .text-input {
@@ -201,8 +227,9 @@ input:disabled {
   min-width: 0;
   min-height: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow: auto;
   padding: 6px;
   border-radius: 20px;
   background:
@@ -213,7 +240,8 @@ input:disabled {
 
 #canvasStage {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 595.28 / 841.89;
+  flex: 0 0 auto;
   background: #fff;
   border: 2px solid var(--line);
   border-radius: 14px;
@@ -236,7 +264,8 @@ input:disabled {
 
 .palette-btn:focus-visible,
 .tool-btn:focus-visible,
-.brush-preset-btn:focus-visible {
+.brush-preset-btn:focus-visible,
+.mode-btn:focus-visible {
   outline: 3px solid rgba(15, 127, 160, 0.35);
   outline-offset: 2px;
 }

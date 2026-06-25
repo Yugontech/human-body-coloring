@@ -36,6 +36,24 @@
       </section>
 
       <section class="control-group">
+        <h2>描画範囲</h2>
+        <div class="mode-toggle" role="group" aria-label="描画範囲">
+          <button id="insideModeBtn" class="mode-btn active" type="button" data-region="inside" disabled>人の中</button>
+          <button id="outsideModeBtn" class="mode-btn" type="button" data-region="outside" disabled>人の外</button>
+        </div>
+      </section>
+
+      <section class="control-group">
+        <h2>表示</h2>
+        <div class="zoom-controls" role="group" aria-label="キャンバスの拡大縮小">
+          <button id="zoomOutBtn" class="tool-btn" type="button" disabled>縮小</button>
+          <span id="zoomValue" class="zoom-value" aria-live="polite">100%</span>
+          <button id="zoomInBtn" class="tool-btn" type="button" disabled>拡大</button>
+          <button id="zoomResetBtn" class="tool-btn zoom-reset-btn" type="button" disabled>100%</button>
+        </div>
+      </section>
+
+      <section class="control-group">
         <h2>ID</h2>
         <label class="slider-label" for="exportIdInput">保存ファイル名に使うID</label>
         <input

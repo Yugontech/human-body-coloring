@@ -26,8 +26,9 @@ python3 -m http.server 8080
 
 - SVGレイヤー構成:
   - `silhouetteFill`: 白い人型シルエット
-  - `paintGroup`: ユーザーが描いたSVGストローク
-  - `eraserMaskGroup`: 消しゴム用SVGマスク
+  - `insidePaintGroup`: 人型の中に描いたSVGストローク
+  - `outsidePaintGroup`: 人型の外に描いたSVGストローク
+  - `insideEraserMaskGroup` / `outsideEraserMaskGroup`: 消しゴム用SVGマスク
   - `silhouette-outline`: 輪郭線（最前面）
 - 起動時に `silhouette.svg` の `viewBox` / 最初の `path` を読み取り、インラインSVGとして表示
 - マスク生成:
@@ -37,15 +38,23 @@ python3 -m http.server 8080
 - 輪郭表示:
   - SVG の線色 / 線幅を使って輪郭線を最前面に描画
 - 操作:
-  - 4色パレット / 消しゴム / すべて消去 / 一つ前に戻る（最大20）/ PNG保存
+  - 4色パレット / 消しゴム / すべて消去 / 一つ前に戻る（最大20）/ PNG保存 / SVG保存
   - ブラシ太さプリセット（5 / 10 / 15 / 20px）
+  - 描画範囲切り替え（人の中 / 人の外）
+  - キャンバス拡大縮小（50%〜250%）
   - ID入力欄（保存時ファイル名に反映）
   - Pointer Events でマウス / タッチ / ペン対応
   - web/モバイル表示ともに凡例の表示/非表示をトグル可能
+- SVG保存:
+  - ペイントと消しゴムをSVGの `path` として保存
+  - 各ストロークに `data-order` / `data-tool` / `data-region` / `data-color` / `data-brush-size` / `data-created-at` を付与
+  - `<metadata>` 内に描画順付きのJSON履歴を埋め込み
+  - 非表示の `paint-history` グループにも描画順でストローク履歴を保存
 - 描画品質:
   - 表示中のシルエット・塗り・消しゴムはSVG要素として保持
+  - キャンバス表示は `silhouette.svg` の `viewBox` 比率に合わせた長方形
   - 拡大表示時も輪郭とストロークはベクターとして描画
-  - PNG保存時のみSVGを高解像度（2500px四方）にラスタライズ
+  - PNG保存時のみSVGを高解像度（長辺2500px）にラスタライズ
 
 ## 動作確認想定ブラウザ
 
