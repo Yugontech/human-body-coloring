@@ -245,6 +245,7 @@ input:disabled {
 }
 
 .canvas-panel {
+  position: relative;
   min-width: 0;
   min-height: 0;
   flex: 1;
@@ -267,6 +268,82 @@ input:disabled {
     linear-gradient(45deg, rgba(255, 255, 255, 0.58) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.58) 50%, rgba(255, 255, 255, 0.58) 75%, transparent 75%, transparent 100%),
     #c6e7f4;
   background-size: 18px 18px;
+}
+
+.mode-status {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 132px);
+  padding: 7px 10px;
+  border: 1px solid rgba(31, 78, 95, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 18px rgba(16, 36, 48, 0.14);
+  font-size: 0.86rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.mode-status .mode-pill {
+  color: #0f6680;
+}
+
+.minimap {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 12;
+  width: 94px;
+  aspect-ratio: 595.28 / 841.89;
+  border: 1px solid rgba(31, 78, 95, 0.26);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 18px rgba(16, 36, 48, 0.16);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.minimap-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.touch-guide {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92%, 420px);
+  transform: translateX(-50%);
+  padding: 8px 10px 8px 12px;
+  border: 1px solid rgba(31, 78, 95, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(16, 36, 48, 0.18);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.touch-guide button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: #0f7fa0;
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 9px;
+  cursor: pointer;
 }
 
 #canvasStage {
@@ -432,6 +509,26 @@ body.legend-collapsed .legend-toggle-btn {
     padding: 8px;
     align-items: flex-start;
     justify-content: flex-start;
+  }
+
+  .mode-status {
+    top: 12px;
+    left: 12px;
+    max-width: calc(100% - 112px);
+    font-size: 0.78rem;
+    padding: 6px 9px;
+  }
+
+  .minimap {
+    top: 12px;
+    right: 12px;
+    width: 76px;
+  }
+
+  .touch-guide {
+    bottom: 12px;
+    font-size: 0.78rem;
+    border-radius: 14px;
   }
 
   #canvasStage {

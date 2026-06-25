@@ -35,6 +35,7 @@ const MAX_ZOOM = 2.5;
 const ZOOM_STEP = 0.25;
 const LEGEND_COLLAPSED_STORAGE_KEY = 'human-body-coloring.legendCollapsed';
 const SIDEBAR_WIDTH_STORAGE_KEY = 'human-body-coloring.sidebarWidth';
+const TOUCH_GUIDE_SEEN_STORAGE_KEY = 'human-body-coloring.touchGuideSeen';
 const DEFAULT_SIDEBAR_WIDTH = 360;
 const MIN_SIDEBAR_WIDTH = 300;
 const MAX_SIDEBAR_WIDTH = 560;
@@ -55,6 +56,11 @@ const EXPORT_SIZE = 2500;
 const canvasHost = document.getElementById('canvasHost');
 const canvasStage = document.getElementById('canvasStage');
 const sidebarResizeHandle = document.getElementById('sidebarResizeHandle');
+const modeStatus = document.getElementById('modeStatus');
+const minimap = document.getElementById('minimap');
+const minimapSvg = document.getElementById('minimapSvg');
+const touchGuide = document.getElementById('touchGuide');
+const touchGuideDismissBtn = document.getElementById('touchGuideDismissBtn');
 
 const statusText = document.getElementById('statusText');
 const palette = document.getElementById('palette');
@@ -70,6 +76,7 @@ const zoomValue = document.getElementById('zoomValue');
 const exportIdInput = document.getElementById('exportIdInput');
 const eraserBtn = document.getElementById('eraserBtn');
 const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
 const clearBtn = document.getElementById('clearBtn');
 const saveBtn = document.getElementById('saveBtn');
 const saveSvgBtn = document.getElementById('saveSvgBtn');
@@ -92,6 +99,7 @@ const state = {
   nextStrokeOrder: 1,
   legendCollapsed: false,
   undoStack: [],
+  redoStack: [],
   resizeObserver: null,
   svg: null,
   paintGroup: null,
@@ -394,12 +402,18 @@ function bindUiEvents() {
     undo();
   });
 
+  redoBtn.addEventListener('click', () => {
+    redo();
+  });
+
   clearBtn.addEventListener('click', () => {
     if (!state.ready) {
       return;
     }
+    if (!window.confirm('すべての描画を消去します。よろしいですか？')) {
+      return;
+    }
     clearDrawing();
-    updateUndoButtonState();
   });
 
   saveBtn.addEventListener('click', () => {
@@ -411,6 +425,11 @@ function bindUiEvents() {
   });
 
   window.addEventListener('resize', requestResize, { passive: true });
+  canvasHost.addEventListener('scroll', updateMinimapViewport, { passive: true });
+
+  if (touchGuideDismissBtn) {
+    touchGuideDismissBtn.addEventListener('click', dismissTouchGuide);
+  }
 }
 
 async function createSvgStage() {
@@ -531,10 +550,14 @@ async function createSvgStage() {
 
     resizeStage();
     installResizeObserver();
+    buildMinimap();
 
     state.ready = true;
     setControlsEnabled(true);
-    updateUndoButtonState();
+    updateHistoryButtonState();
+    updateActiveUi();
+    updateMinimapViewport();
+    maybeShowTouchGuide();
     setStatus('');
   } catch (error) {
     console.error(error);
@@ -672,6 +695,7 @@ function resizeStage() {
   canvasStage.style.width = `${Math.floor(cssWidth * state.zoom)}px`;
   canvasStage.style.height = `${Math.floor(cssHeight * state.zoom)}px`;
   updateZoomUi();
+  updateMinimapViewport();
 }
 
 function calculateStageSize() {
@@ -712,6 +736,7 @@ function applyZoom(nextZoom, options = {}) {
   resizeStage();
   canvasHost.scrollLeft = (contentX * zoom) - focalX;
   canvasHost.scrollTop = (contentY * zoom) - focalY;
+  updateMinimapViewport();
 }
 
 function getViewportFocalPoint() {
@@ -917,12 +942,14 @@ function appendStrokeElement(tool, element) {
   state.nextStrokeOrder += 1;
 
   if (tool === 'eraser') {
-    getEraserMaskGroupForRegion(state.drawRegion).appendChild(element);
-    return { type: 'stroke', element };
+    const parent = getEraserMaskGroupForRegion(state.drawRegion);
+    parent.appendChild(element);
+    return { type: 'stroke', element, parent };
   }
 
-  getPaintGroupForRegion(state.drawRegion).appendChild(element);
-  return { type: 'stroke', element };
+  const parent = getPaintGroupForRegion(state.drawRegion);
+  parent.appendChild(element);
+  return { type: 'stroke', element, parent };
 }
 
 function getPaintGroupForRegion(region) {
@@ -984,7 +1011,8 @@ function pushUndoEntry(entry) {
   if (state.undoStack.length > MAX_UNDO_STEPS) {
     state.undoStack.shift();
   }
-  updateUndoButtonState();
+  state.redoStack = [];
+  updateHistoryButtonState();
 }
 
 function undo() {
@@ -993,6 +1021,23 @@ function undo() {
   }
 
   const entry = state.undoStack.pop();
+  applyUndoEntry(entry);
+  state.redoStack.push(entry);
+  updateHistoryButtonState();
+}
+
+function redo() {
+  if (!state.redoStack.length) {
+    return;
+  }
+
+  const entry = state.redoStack.pop();
+  applyRedoEntry(entry);
+  state.undoStack.push(entry);
+  updateHistoryButtonState();
+}
+
+function applyUndoEntry(entry) {
   if (entry.type === 'stroke') {
     entry.element.remove();
   } else if (entry.type === 'clear') {
@@ -1001,8 +1046,17 @@ function undo() {
     state.insideEraserMaskGroup.replaceChildren(...entry.insideEraserChildren);
     state.outsideEraserMaskGroup.replaceChildren(...entry.outsideEraserChildren);
   }
+}
 
-  updateUndoButtonState();
+function applyRedoEntry(entry) {
+  if (entry.type === 'stroke') {
+    entry.parent.appendChild(entry.element);
+  } else if (entry.type === 'clear') {
+    state.insidePaintGroup.replaceChildren();
+    state.outsidePaintGroup.replaceChildren();
+    state.insideEraserMaskGroup.replaceChildren();
+    state.outsideEraserMaskGroup.replaceChildren();
+  }
 }
 
 function clearDrawing() {
@@ -1219,6 +1273,7 @@ function setControlsEnabled(enabled) {
     zoomResetBtn,
     eraserBtn,
     undoBtn,
+    redoBtn,
     clearBtn,
     saveBtn,
     saveSvgBtn
@@ -1229,10 +1284,159 @@ function setControlsEnabled(enabled) {
     }
   });
   updateZoomUi();
+  updateHistoryButtonState();
 }
 
-function updateUndoButtonState() {
-  undoBtn.disabled = !state.ready || state.undoStack.length === 0;
+function updateHistoryButtonState() {
+  if (undoBtn) {
+    undoBtn.disabled = !state.ready || state.undoStack.length === 0;
+  }
+  if (redoBtn) {
+    redoBtn.disabled = !state.ready || state.redoStack.length === 0;
+  }
+}
+
+function buildMinimap() {
+  if (!minimapSvg || !state.silhouetteSpec) {
+    return;
+  }
+
+  const spec = state.silhouetteSpec;
+  const viewBox = spec.viewBox;
+  minimapSvg.replaceChildren();
+  minimapSvg.setAttribute('viewBox', viewBoxToString(viewBox));
+  minimapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  minimapSvg.appendChild(createSvgElement('rect', {
+    x: String(viewBox.minX),
+    y: String(viewBox.minY),
+    width: String(viewBox.width),
+    height: String(viewBox.height),
+    fill: '#f8fbfc'
+  }));
+  minimapSvg.appendChild(createSvgElement('path', {
+    d: spec.clipPathData,
+    fill: '#ffffff'
+  }));
+
+  const outline = createOutlineElement(spec);
+  outline.removeAttribute('class');
+  minimapSvg.appendChild(outline);
+
+  minimapSvg.appendChild(createSvgElement('rect', {
+    id: 'minimapViewport',
+    x: String(viewBox.minX),
+    y: String(viewBox.minY),
+    width: String(viewBox.width),
+    height: String(viewBox.height),
+    fill: '#0f7fa0',
+    'fill-opacity': '0.12',
+    stroke: '#0f7fa0',
+    'stroke-width': String(Math.max(viewBox.width, viewBox.height) * 0.012),
+    'vector-effect': 'non-scaling-stroke'
+  }));
+
+  updateMinimapViewport();
+}
+
+function updateMinimapViewport() {
+  if (!minimap || !minimapSvg || !state.ready || !state.silhouetteViewBox) {
+    return;
+  }
+
+  const viewportRect = minimapSvg.querySelector('#minimapViewport');
+  if (!viewportRect) {
+    return;
+  }
+
+  const shouldShow = state.zoom > DEFAULT_ZOOM + 0.01;
+  minimap.hidden = !shouldShow;
+  minimap.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+
+  if (!shouldShow) {
+    return;
+  }
+
+  const hostRect = canvasHost.getBoundingClientRect();
+  const stageRect = canvasStage.getBoundingClientRect();
+  const visibleLeft = clamp(hostRect.left, stageRect.left, stageRect.right);
+  const visibleTop = clamp(hostRect.top, stageRect.top, stageRect.bottom);
+  const visibleRight = clamp(hostRect.right, stageRect.left, stageRect.right);
+  const visibleBottom = clamp(hostRect.bottom, stageRect.top, stageRect.bottom);
+  const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+  const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+  if (!visibleWidth || !visibleHeight || !stageRect.width || !stageRect.height) {
+    minimap.hidden = true;
+    minimap.setAttribute('aria-hidden', 'true');
+    return;
+  }
+
+  const viewBox = state.silhouetteViewBox;
+  const x = viewBox.minX + ((visibleLeft - stageRect.left) / stageRect.width) * viewBox.width;
+  const y = viewBox.minY + ((visibleTop - stageRect.top) / stageRect.height) * viewBox.height;
+  const width = (visibleWidth / stageRect.width) * viewBox.width;
+  const height = (visibleHeight / stageRect.height) * viewBox.height;
+
+  viewportRect.setAttribute('x', formatNumber(x));
+  viewportRect.setAttribute('y', formatNumber(y));
+  viewportRect.setAttribute('width', formatNumber(width));
+  viewportRect.setAttribute('height', formatNumber(height));
+}
+
+function updateModeStatus() {
+  if (!modeStatus) {
+    return;
+  }
+
+  const regionLabel = state.drawRegion === 'outside' ? '人の外' : '人の中';
+  const toolLabel = state.tool === 'eraser' ? '消しゴム' : 'ブラシ';
+  modeStatus.replaceChildren();
+
+  const region = document.createElement('span');
+  region.className = 'mode-pill';
+  region.textContent = regionLabel;
+  const separator = document.createElement('span');
+  separator.setAttribute('aria-hidden', 'true');
+  separator.textContent = '/';
+  const tool = document.createElement('span');
+  tool.textContent = toolLabel;
+
+  modeStatus.append(region, separator, tool);
+  modeStatus.setAttribute('aria-label', `現在の描画モード: ${regionLabel}、${toolLabel}`);
+}
+
+function maybeShowTouchGuide() {
+  if (!touchGuide) {
+    return;
+  }
+
+  const supportsTouch = navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+  const mobileLayout = window.matchMedia('(max-width: 960px)').matches;
+  if (!supportsTouch && !mobileLayout) {
+    return;
+  }
+
+  try {
+    if (window.localStorage.getItem(TOUCH_GUIDE_SEEN_STORAGE_KEY) === '1') {
+      return;
+    }
+  } catch (error) {
+    console.warn('Touch guide preference could not be read.', error);
+  }
+
+  touchGuide.hidden = false;
+}
+
+function dismissTouchGuide() {
+  if (touchGuide) {
+    touchGuide.hidden = true;
+  }
+  try {
+    window.localStorage.setItem(TOUCH_GUIDE_SEEN_STORAGE_KEY, '1');
+  } catch (error) {
+    console.warn('Touch guide preference could not be saved.', error);
+  }
 }
 
 function updateActiveUi() {
@@ -1260,6 +1464,7 @@ function updateActiveUi() {
   });
 
   eraserBtn.classList.toggle('active', state.tool === 'eraser');
+  updateModeStatus();
 }
 
 function setStatus(text) {
