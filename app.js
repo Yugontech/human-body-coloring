@@ -253,7 +253,7 @@ async function createSvgStage() {
   setStatus('シルエットを初期化中...');
 
   try {
-    const spec = await loadSilhouetteSpec();
+    const spec = normalizeSilhouetteSpec(await loadSilhouetteSpec());
     state.silhouetteSpec = spec;
     state.silhouetteViewBox = spec.viewBox;
 
@@ -272,7 +272,7 @@ async function createSvgStage() {
       clipPathUnits: 'userSpaceOnUse'
     });
     clipPath.appendChild(createSvgElement('path', {
-      d: spec.pathData
+      d: spec.clipPathData
     }));
 
     const mask = createSvgElement('mask', {
@@ -302,7 +302,7 @@ async function createSvgStage() {
     defs.append(clipPath, mask);
 
     const silhouetteFill = createSvgElement('path', {
-      d: spec.pathData,
+      d: spec.clipPathData,
       fill: '#FFFFFF'
     });
     const paintGroup = createSvgElement('g', {
@@ -311,15 +311,7 @@ async function createSvgStage() {
       'clip-path': 'url(#silhouetteClip)',
       mask: 'url(#paintEraserMask)'
     });
-    const outline = createSvgElement('path', {
-      class: 'silhouette-outline',
-      d: spec.pathData,
-      fill: 'none',
-      stroke: spec.strokeColor,
-      'stroke-width': String(spec.strokeWidth),
-      'stroke-linecap': spec.strokeLineCap,
-      'stroke-linejoin': spec.strokeLineJoin
-    });
+    const outline = createOutlineElement(spec);
 
     svg.append(defs, silhouetteFill, paintGroup, outline);
     canvasStage.replaceChildren(svg);
@@ -346,6 +338,44 @@ async function createSvgStage() {
     console.error(error);
     setStatus('シルエット初期化に失敗しました。ブラウザを更新して再読み込みしてください。');
   }
+}
+
+function normalizeSilhouetteSpec(spec) {
+  const subpaths = splitSvgSubpaths(spec.pathData);
+  const usesCompoundOutline = subpaths.length > 1;
+
+  return {
+    ...spec,
+    clipPathData: spec.clipPathData || (usesCompoundOutline ? subpaths[subpaths.length - 1] : spec.pathData),
+    outlinePathData: spec.outlinePathData || spec.pathData,
+    outlineAsFill: spec.outlineAsFill ?? usesCompoundOutline
+  };
+}
+
+function splitSvgSubpaths(pathData) {
+  const subpaths = String(pathData).match(/[Mm][^Mm]*/g);
+  return subpaths && subpaths.length ? subpaths : [pathData];
+}
+
+function createOutlineElement(spec) {
+  if (spec.outlineAsFill) {
+    return createSvgElement('path', {
+      class: 'silhouette-outline',
+      d: spec.outlinePathData,
+      fill: spec.strokeColor,
+      stroke: 'none'
+    });
+  }
+
+  return createSvgElement('path', {
+    class: 'silhouette-outline',
+    d: spec.outlinePathData,
+    fill: 'none',
+    stroke: spec.strokeColor,
+    'stroke-width': String(spec.strokeWidth),
+    'stroke-linecap': spec.strokeLineCap,
+    'stroke-linejoin': spec.strokeLineJoin
+  });
 }
 
 async function loadSilhouetteSpec() {

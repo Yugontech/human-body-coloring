@@ -1,6 +1,6 @@
 # 人型シルエット 4色塗りWebアプリ
 
-`assets/silhouette.svg` 専用の塗り絵アプリです。  
+`silhouette.svg` 専用の塗り絵アプリです。  
 HTML / CSS / Vanilla JavaScript だけで動作します（ビルド不要）。
 
 ## ファイル構成
@@ -8,7 +8,7 @@ HTML / CSS / Vanilla JavaScript だけで動作します（ビルド不要）。
 - `index.html`
 - `styles.css`
 - `app.js`
-- `assets/silhouette.svg`
+- `silhouette.svg`
 
 ## 起動方法
 
@@ -29,7 +29,7 @@ python3 -m http.server 8080
   - `paintGroup`: ユーザーが描いたSVGストローク
   - `eraserMaskGroup`: 消しゴム用SVGマスク
   - `silhouette-outline`: 輪郭線（最前面）
-- `silhouette.svg` の `viewBox` / `path` を `app.js` に固定定義し、インラインSVGとして表示
+- 起動時に `silhouette.svg` の `viewBox` / 最初の `path` を読み取り、インラインSVGとして表示
 - マスク生成:
   - `clipPath` で人型シルエットの内側だけに描画を制限
   - 消しゴムはSVGマスクに黒いストロークを追加して、塗りストロークを非表示化
