@@ -6,6 +6,7 @@
   --panel-shadow: 0 18px 40px rgba(16, 36, 48, 0.2);
   --focus: #0f7fa0;
   --active-bg: #d8f0f9;
+  --sidebar-width: 360px;
 }
 
 * {
@@ -25,6 +26,7 @@ body {
     radial-gradient(circle at 10% 12%, rgba(242, 140, 40, 0.2), transparent 45%),
     radial-gradient(circle at 88% 84%, rgba(33, 158, 188, 0.22), transparent 40%),
     linear-gradient(145deg, #fff8ee 0%, #e7f5fd 100%);
+  overflow: hidden;
 }
 
 #app {
@@ -35,7 +37,9 @@ body {
 }
 
 .tool-panel {
-  width: 290px;
+  width: var(--sidebar-width);
+  min-width: 300px;
+  max-width: min(560px, calc(100vw - 520px));
   flex-shrink: 0;
   background: var(--panel-bg);
   border: 2px solid var(--panel-border);
@@ -43,6 +47,31 @@ body {
   box-shadow: var(--panel-shadow);
   padding: 14px;
   overflow: auto;
+}
+
+.sidebar-resize-handle {
+  width: 12px;
+  flex: 0 0 12px;
+  border-radius: 999px;
+  cursor: col-resize;
+  position: relative;
+  touch-action: none;
+}
+
+.sidebar-resize-handle::before {
+  content: '';
+  position: absolute;
+  inset: 12px 4px;
+  border-radius: 999px;
+  background: rgba(43, 97, 116, 0.28);
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.sidebar-resize-handle:hover::before,
+.sidebar-resize-handle:focus-visible::before,
+body.resizing-sidebar .sidebar-resize-handle::before {
+  background: rgba(15, 127, 160, 0.7);
+  transform: scaleX(1.35);
 }
 
 .tool-panel h1 {
@@ -230,6 +259,8 @@ input:disabled {
   align-items: flex-start;
   justify-content: center;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 6px;
   border-radius: 20px;
   background:
@@ -242,6 +273,7 @@ input:disabled {
   position: relative;
   aspect-ratio: 595.28 / 841.89;
   flex: 0 0 auto;
+  margin: auto;
   background: #fff;
   border: 2px solid var(--line);
   border-radius: 14px;
@@ -385,23 +417,113 @@ body.legend-collapsed .legend-toggle-btn {
 @media (max-width: 960px) {
   #app {
     flex-direction: column;
-    padding: 10px;
-    gap: 10px;
+    padding: 8px;
+    gap: 8px;
   }
 
   .canvas-panel {
-    min-height: 50vh;
+    flex: 1 1 auto;
+    min-height: 0;
     order: 1;
+  }
+
+  #canvasHost {
+    border-radius: 16px;
+    padding: 8px;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  #canvasStage {
+    border-radius: 12px;
   }
 
   .tool-panel {
     width: auto;
+    min-width: 0;
+    max-width: none;
     order: 2;
-    max-height: 42vh;
+    max-height: min(43dvh, 360px);
+    padding: 10px;
+    border-radius: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
-  .palette {
-    grid-template-columns: 1fr 1fr;
+  .sidebar-resize-handle {
+    display: none;
+  }
+
+  .tool-panel h1,
+  .status-text,
+  .instruction-box {
+    grid-column: 1 / -1;
+  }
+
+  .tool-panel h1 {
+    font-size: 1rem;
+    margin-bottom: 0;
+  }
+
+  .status-text {
+    padding: 6px 8px;
+    font-size: 0.82rem;
+  }
+
+  .instruction-box {
+    margin-top: 0;
+    padding: 8px 10px;
+  }
+
+  .instruction-box p {
+    font-size: 0.8rem;
+  }
+
+  .control-group {
+    margin-top: 0;
+  }
+
+  .control-group h2 {
+    margin-bottom: 6px;
+    font-size: 0.86rem;
+  }
+
+  .preset-label,
+  .slider-label {
+    font-size: 0.8rem;
+  }
+
+  .palette,
+  .brush-presets,
+  .mode-toggle,
+  .actions {
+    gap: 6px;
+  }
+
+  .palette-btn,
+  .tool-btn,
+  .brush-preset-btn,
+  .mode-btn {
+    min-height: 40px;
+    padding: 7px 8px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+  }
+
+  .zoom-controls {
+    gap: 6px;
+  }
+
+  .zoom-value {
+    min-width: 48px;
+    font-size: 0.82rem;
+  }
+
+  .text-input {
+    min-height: 40px;
+    font-size: 0.84rem;
+    padding: 7px 8px;
   }
 
   .color-legend {
@@ -429,5 +551,38 @@ body.legend-collapsed .legend-toggle-btn {
 
   body.legend-collapsed #app {
     padding-bottom: 60px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tool-panel {
+    max-height: min(38dvh, 300px);
+  }
+
+  .instruction-box {
+    display: none;
+  }
+
+  .actions,
+  .zoom-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .zoom-value {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+
+  .zoom-reset-btn {
+    grid-column: auto;
+  }
+
+  .save-btn {
+    grid-column: auto;
+  }
+
+  .color-legend {
+    max-height: 42dvh;
+    overflow: auto;
   }
 }

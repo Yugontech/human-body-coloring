@@ -34,6 +34,10 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2.5;
 const ZOOM_STEP = 0.25;
 const LEGEND_COLLAPSED_STORAGE_KEY = 'human-body-coloring.legendCollapsed';
+const SIDEBAR_WIDTH_STORAGE_KEY = 'human-body-coloring.sidebarWidth';
+const DEFAULT_SIDEBAR_WIDTH = 360;
+const MIN_SIDEBAR_WIDTH = 300;
+const MAX_SIDEBAR_WIDTH = 560;
 const SILHOUETTE_SOURCE = 'silhouette.svg';
 const FALLBACK_SILHOUETTE_SPEC = {
   label: 'silhouette.svg',
@@ -50,6 +54,7 @@ const EXPORT_SIZE = 2500;
 
 const canvasHost = document.getElementById('canvasHost');
 const canvasStage = document.getElementById('canvasStage');
+const sidebarResizeHandle = document.getElementById('sidebarResizeHandle');
 
 const statusText = document.getElementById('statusText');
 const palette = document.getElementById('palette');
@@ -108,10 +113,123 @@ init();
 function init() {
   buildColorUi();
   setupLegendToggle();
+  setupSidebarResize();
   bindUiEvents();
   setControlsEnabled(false);
   updateActiveUi();
   createSvgStage();
+}
+
+function setupSidebarResize() {
+  const savedWidth = readSidebarWidth();
+  if (savedWidth) {
+    setSidebarWidth(savedWidth);
+  }
+
+  if (!sidebarResizeHandle) {
+    return;
+  }
+
+  let startX = 0;
+  let startWidth = 0;
+
+  sidebarResizeHandle.addEventListener('pointerdown', (event) => {
+    if (!window.matchMedia('(min-width: 961px)').matches) {
+      return;
+    }
+
+    event.preventDefault();
+    startX = event.clientX;
+    startWidth = getCurrentSidebarWidth();
+    document.body.classList.add('resizing-sidebar');
+    sidebarResizeHandle.setPointerCapture(event.pointerId);
+  });
+
+  sidebarResizeHandle.addEventListener('pointermove', (event) => {
+    if (!sidebarResizeHandle.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+
+    setSidebarWidth(startWidth + event.clientX - startX);
+    requestResize();
+  });
+
+  sidebarResizeHandle.addEventListener('pointerup', (event) => {
+    finishSidebarResize(event.pointerId);
+  });
+
+  sidebarResizeHandle.addEventListener('pointercancel', (event) => {
+    finishSidebarResize(event.pointerId);
+  });
+
+  sidebarResizeHandle.addEventListener('keydown', (event) => {
+    if (!window.matchMedia('(min-width: 961px)').matches) {
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      setSidebarWidth(getCurrentSidebarWidth() - 20);
+      persistSidebarWidth();
+      requestResize();
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      setSidebarWidth(getCurrentSidebarWidth() + 20);
+      persistSidebarWidth();
+      requestResize();
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setSidebarWidth(MIN_SIDEBAR_WIDTH);
+      persistSidebarWidth();
+      requestResize();
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setSidebarWidth(MAX_SIDEBAR_WIDTH);
+      persistSidebarWidth();
+      requestResize();
+    }
+  });
+
+  function finishSidebarResize(pointerId) {
+    if (sidebarResizeHandle.hasPointerCapture(pointerId)) {
+      sidebarResizeHandle.releasePointerCapture(pointerId);
+    }
+    document.body.classList.remove('resizing-sidebar');
+    persistSidebarWidth();
+    requestResize();
+  }
+}
+
+function readSidebarWidth() {
+  try {
+    const width = Number(window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY));
+    return Number.isFinite(width) ? clampSidebarWidth(width) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function persistSidebarWidth() {
+  try {
+    window.localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(getCurrentSidebarWidth()));
+  } catch (error) {
+    // no-op: private browsing 等で localStorage が使えない場合は保存しない。
+  }
+}
+
+function setSidebarWidth(width) {
+  document.documentElement.style.setProperty('--sidebar-width', `${clampSidebarWidth(width)}px`);
+}
+
+function getCurrentSidebarWidth() {
+  const raw = window.getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width');
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : DEFAULT_SIDEBAR_WIDTH;
+}
+
+function clampSidebarWidth(width) {
+  const responsiveMax = Math.max(MIN_SIDEBAR_WIDTH, window.innerWidth - 520);
+  return clamp(width, MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, responsiveMax));
 }
 
 function buildColorUi() {
@@ -753,6 +871,10 @@ function updatePinchGesture() {
 
 function cancelActiveStroke() {
   if (state.activePath) {
+    const order = Number(state.activePath.dataset.order);
+    if (Number.isFinite(order) && order === state.nextStrokeOrder - 1) {
+      state.nextStrokeOrder -= 1;
+    }
     state.activePath.remove();
   }
 
