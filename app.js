@@ -1403,7 +1403,17 @@ function updateModeStatus() {
   tool.textContent = toolLabel;
 
   modeStatus.append(region, separator, tool);
-  modeStatus.setAttribute('aria-label', `現在の描画モード: ${regionLabel}、${toolLabel}`);
+
+  if (state.tool === 'brush') {
+    const swatch = document.createElement('span');
+    swatch.className = 'mode-color-swatch';
+    swatch.style.setProperty('--mode-color', state.selectedColor);
+    swatch.setAttribute('aria-hidden', 'true');
+    modeStatus.append(swatch);
+    modeStatus.setAttribute('aria-label', `現在の描画モード: ${regionLabel}、${toolLabel}、選択色 ${state.selectedColor}`);
+  } else {
+    modeStatus.setAttribute('aria-label', `現在の描画モード: ${regionLabel}、${toolLabel}`);
+  }
 }
 
 function maybeShowTouchGuide() {
