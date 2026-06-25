@@ -316,14 +316,13 @@ input:disabled {
 
 .touch-guide {
   position: absolute;
-  left: 50%;
+  left: 14px;
   bottom: 14px;
   z-index: 15;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   max-width: min(92%, 420px);
-  transform: translateX(-50%);
   padding: 8px 10px 8px 12px;
   border: 1px solid rgba(31, 78, 95, 0.22);
   border-radius: 999px;
@@ -526,6 +525,10 @@ body.legend-collapsed .legend-toggle-btn {
   }
 
   .touch-guide {
+    left: 12px;
+    right: 12px;
+    width: fit-content;
+    max-width: calc(100% - 24px);
     bottom: 12px;
     font-size: 0.78rem;
     border-radius: 14px;
